@@ -10,6 +10,7 @@ Simplified Onion Routing Network App
 * Jastaj Virdee - *Jastajvirdee*
 * Edward Zhao - *edwardtanzho*
 * Camilo Garcia La Rotta - *CamiloGarciaLaRotta*
+* Dennis Liu - *dliuproduction*
 
 ### Goal 
 Minimalistic implementation of onion routing and analysis of its performance via simulation.
