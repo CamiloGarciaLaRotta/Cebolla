@@ -1,0 +1,14 @@
+The question is how will we test the project so as to prove it works
+
+Testing should be divided into 2 sections:
+
+1. Testing we can indeed communicate
+2. Testing the performance of the implementation
+
+For the first one (communication) we can play it safe and talk about test driven development as well as continous integration.
+We will write test cases first, write the unit tests, then write the code necessary for the tests to pass.
+All src code will be handled through a version control system (GitHuB) and the concept of pair programming to do code reviews as we develop.
+
+As for the second section of testinng (performance) we gotta find some tools for network testing (i.e. nmap, wireshark) and talk about 
+how we will benchmark those tests ina very high level manner
+
