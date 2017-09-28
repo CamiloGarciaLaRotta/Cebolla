@@ -1,0 +1,6 @@
+# tex-related bs
+*.aux
+*.log
+*.dvi
+*.fdb_latexmk
+*.fls
