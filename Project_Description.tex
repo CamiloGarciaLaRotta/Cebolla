@@ -34,32 +34,33 @@ that will be referred to as nodes that communicate via TCP and HTTP packets.
 Each node has a key pair that can be used to implement asymmetric cryptography.
 Additionally, there will be a special server called the Directory Node. This
 Directory Node contains a set of all $n$ node address and public key pairs: $\{(a_i,
-p_i, s_i) | 0 \leq i < n\}$, where $a_i, p_i, s_i$ are the address, public key,
-and private key corresponding to node $i$, respectively.\\\\
+p_i) | 0 \leq i < n\}$, where $a_i, p_i$ are the address and  public key
+corresponding to node $i$, respectively.\\\\
 Say a sender $\mathcal{S}$ wishes to send a request (and receive a response)
 from some destination $\mathcal{D}$.
 Firstly, $\mathcal{S}$ establishes a TCP connection to the Directory Node,
-which responds with  list of node addresses and public keys to $\mathcal{S}$ describing the nodes that
-will construct the path that a message will follow. \\\\
-$\mathcal{S}$ then constructs a request packet destined for $\mathcal{D}$. Given the list of
-public keys of the nodes in the path, this packet can then be encrypted
-sequentially. For example, if the path goes from $a_i\rightarrow a_j\rightarrow
-a_k$, the message is first encrypted with $p_i$, whose output is encrypted with
-$p_j$, whose output is then encrypted with $p_k$. The encrypted message
-is then sent to the first intermediary node in the path.\\\\
-The intermediary nodes all follow the exact same protocol. Say some node $N$
-receives a packet from $A$. Firstly, upon the
-reception of a packet, the packet body is decrypted with the $N$'s
-private key. Now, the current node has deciphered enough to send the decrypted
-packet to its destination, $N'$. A TCP connection is established between $N$
-and $N'$, and the packet is sent. After sending a packet, the node then waits for a
-response packet. Upon receiving this response, the node may encrypt the
-response with its \textit{private key}, and send the response back to the node
-$A$. At this point, the TCP connection between $N$ and $N'$ may be closed.\\\\
-When $\mathcal{S}$ receives a response, it will be encrypted with the private keys of
-all the nodes in the path. However, since $\mathcal{S}$ knows which nodes were in the
-path, he may decrypt the response with the public keys of those nodes. For this
-functionality to be guaranteed, the RSA encryption scheme will be used.\\\\
+which generates a random path of nodes through which $\mathcal{S}$ will send
+his message. For each node $n_i$ in the list, the Directory Node negotiates
+with the corresponding $p_i$, thereby producing symmetric keys $s_i$ for each
+intermediate node. The Directory Node then constructs a packet containing
+$\{(a_i, s_i), n_i \in \mathbf{path}\}$ and encrypts it with the public key
+corresponding to $\mathcal{S}$, and sends the cipher to $\mathcal{S}$.\\\\
+Now, $\mathcal{S}$ can decrypt the cipher with his private key. He creates the
+request he wishes to send to $\mathcal{D}$, and encrypts with each $s_i$
+successively, in reverse order (so the first $s_i$ he encrypts with corresponds
+to the last node in the path). Before encrypting with each $s_i$, a header
+indicating which node to send to next is prepended so that each node can
+determine where to send the packet after decrypting. The sender proceeds to
+send this cipher to the first node in the path.\\\\
+Each intermediate node behaves according to the exact same protocol. Upon
+receiving a packet, an intermediate node $n_i$ can decrypt the packet with its
+symmetric key, and can determine the node $n_{i-1}$ immediately before it in
+the path. Upon decrypting, the node can read the address of the next node $n_{i+1}$
+in the path, and sends the packet to $n_{i+1}$. Then, the node waits for a response packet. Upon receiving the response packet, $n_i$ encrypts the response with $s_i$ and sends the packet to $n_{i-1}$.
+When $\mathcal{S}$ receives the response, he may decrypt with each symmetric
+key successively, and can then read the response.\\\\
+%which responds with  list of node addresses and public keys to $\mathcal{S}$ describing the nodes that
+%will construct the path that a message will follow. \\\\
 The node servers (and Directory Node server) will be programmed with the Python
 programming language, and will use the Flask framework to handle concurrent
 requests. The Vagrant tool will be used to automate the creation of virtual
@@ -67,7 +68,7 @@ machines which will simulate the nodes. Additionally, to save processing power,
 the Directory Node will run locally on the sender's machine for the purposes of
 the simulation.\\\\
 Furthermore, the NTRU cryptoscheme will be considered and investigated to
-provide key exchange for the TCP connections between nodes that maintains
+provide key exchange for communicating the $s_i$ keys, and can maintain
 security against quantum opponents.
 
 \section*{Testing}
