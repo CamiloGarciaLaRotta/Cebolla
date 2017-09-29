@@ -6,7 +6,7 @@ Simplified Onion Routing Network App
 ### Team:
 * Stuart Mashaal - *stumash*
 * Harley Wiltzer - *DestructiveReasoning*
-* Spiro Mobroidakos - *Dakos-Industrie's*
+* Spiros Mavroidakos - *Dakos-Industries*
 * Jastaj Virdee - *Jastajvirdee*
 * Edward Zhao - *edwardtanzho*
 * Camilo Garcia La Rotta - *CamiloGarciaLaRotta*
