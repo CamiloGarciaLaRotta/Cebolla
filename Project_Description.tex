@@ -59,7 +59,7 @@ send this many-layered ``onion'' of ciphers to the first node in the path.\\
 a packet, a node $n_j$ decrypts the packet with its symmetric key to expose $a_{j+1}$, the
 address of the next node $n_{j+1}$ in the path.  After sending the packet to $n_{j+1}$, $n_j$
 waits for a response packet.  When a response packet is received, $n_j$ encrypts the response with
-$s_j$ and sends the packet to $n_{j-1}$.  When $\mathcal{S}$ receives the response, he decrypts
+$sym_j$ and sends the packet to $n_{j-1}$.  When $\mathcal{S}$ receives the response, he decrypts
 with each symmetric key successively (now in forward order), and can then read the response.\\
 
 \noindent All nodes will be implemented as TCP servers programmed with the Python programming
