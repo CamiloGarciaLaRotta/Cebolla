@@ -1,7 +1,7 @@
 \documentclass[10pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath,amssymb,amsfonts, mathtools}
-\usepackage{enumitem}                   
+\usepackage{enumitem}
 \usepackage{listings}                   % insert code
 \usepackage{graphicx}                   % Insert images
 %\graphicspath{ {images/} }
@@ -12,62 +12,50 @@
 \noindent
 \large \textbf{ECSE 414 Intro. to Telecom. Networks} \hfill \textbf{Camilo Garcia La Rotta} \textbf{\#260657037} \\
 \large \textbf{Deliverable \#1 - Description} \hfill \textbf{Jastaj Virdee} \textbf{\#260689027} \\
+\large \textbf{Topic: Onion Routing} \hfill \textbf{Jastaj Virdee} \textbf{\#260689027} \\
 \text{} \hfill \textbf{Edward Zhao} \textbf{\#260690376}\\
 \text{} \hfill \textbf{Harley Wiltzer} \textbf{\#260690006}\\
 \text{} \hfill \textbf{Spiros-Daniel Mavroidakos} \textbf{\#260689391}\\
-\text{} \hfill \textbf{Stuart Mashaal} \textbf{\#?????????}\\
+\text{} \hfill \textbf{Stuart Mashaal} \textbf{\#260639962}\\
 
 \section*{Methodology}
-%The implementation of the Onion Routing protocol will involve having several
-%computers running servers that will handle the processing and transmission of packets along a path.\\
-%The following will outline the tactics that will be used in order to ensure
-%that data may be sent anonymously across several intermediary nodes in such a
-%way that each node only knows the source of the data and the destination of the
-%next node. The protocol will ensure that only the sender knows which
-%intermediary nodes are accessed, and thus no intermediary nodes know the full
-%path of nodes in the transmission.\\
-%The following will outline the tactics that will be used to ensure that a sender
-%$\mathcal{S}$ can transmit a message to a destination, $\mathcal{D}$, with the security
-%guarantees outlined above.\\\\
-The Onion Routing protocol will be implemented with several independent routers
-that will be referred to as nodes that communicate via TCP and HTTP packets.
-Each node has a key pair that can be used to implement asymmetric cryptography.
-Additionally, there will be a special server called the Directory Node. This
-Directory Node contains a set of all $n$ node address and public key pairs: $\{(a_i,
-p_i) | 0 \leq i < n\}$, where $a_i, p_i$ are the address and  public key
-corresponding to node $i$, respectively.\\\\
-Say a sender $\mathcal{S}$ wishes to send a request (and receive a response)
-from some destination $\mathcal{D}$.
-Firstly, $\mathcal{S}$ establishes a TCP connection to the Directory Node,
-which generates a random path of nodes through which $\mathcal{S}$ will send
-his message. For each node $n_i$ in the list, the Directory Node negotiates
-with the corresponding $p_i$, thereby producing symmetric keys $s_i$ for each
-intermediate node. The Directory Node then constructs a packet containing
-$\{(a_i, s_i), n_i \in \mathbf{path}\}$ and encrypts it with the public key
-corresponding to $\mathcal{S}$, and sends the cipher to $\mathcal{S}$.\\\\
-Now, $\mathcal{S}$ can decrypt the cipher with his private key. He creates the
-request he wishes to send to $\mathcal{D}$, and encrypts with each $s_i$
-successively, in reverse order (so the first $s_i$ he encrypts with corresponds
-to the last node in the path). Before encrypting with each $s_i$, a header
+
+The Onion Routing Protocol will be implemented with several independent routers (nodes)
+communicating via TCP packets.  For all $N$ nodes, each node $n_i$ has
+an asymmetric cryptographic key pair $(pub_{i},priv_{i})$ and an IP address $a_i$.  Additionally, a special
+server called the Directory Node contains the information $\{(a_i, pub_i) \forall i \in [\![1..N]\!]\}$.\\
+
+\noindent Say a sender $\mathcal{S}$ wishes to send a request (and receive a response)
+from some destination $\mathcal{D}$.  Firstly, $\mathcal{S}$ connects to the Directory Node
+and requests a path $\mathbf{P}$ through the network. The Directory Node then generates
+$\mathbf{P}$, a random and ordered subset of the onion-net's $N$ nodes where $|\mathbf{P}| \leq N$.  For each node
+$n_j \in \mathbf{P}$, the Directory Node negotiates using the corresponding
+$pub_j$ and its own private key, thereby producing a symmetric key $sym_j$.  The Directory
+Node then constructs a packet containing $\{(a_j, sym_j) \forall j \in [\![1..|\mathbf{P}|]\!]\}$ and
+encrypts it with the public key corresponding to $\mathcal{S}$, and sends the cipher to $\mathcal{S}$.\\
+
+\noindent Now, $\mathcal{S}$ decrypts the cipher with his private key. He creates the
+request he wishes to send to $\mathcal{D}$, and encrypts with each $sym_j$
+successively, but in reverse order (so the first $sym_j$ he encrypts with is $sym_{|\mathbf{P}|}$, which corresponds
+to the last node in the path). Before encrypting with each $sym_j$, a header
 indicating which node to send to next is prepended so that each node can
-determine where to send the packet after decrypting. The sender proceeds to
-send this cipher to the first node in the path.\\\\
-Each intermediate node behaves according to the exact same protocol. Upon
-receiving a packet, an intermediate node $n_i$ can decrypt the packet with its
-symmetric key, and can determine the node $n_{i-1}$ immediately before it in
-the path. Upon decrypting, the node can read the address of the next node $n_{i+1}$
-in the path, and sends the packet to $n_{i+1}$. Then, the node waits for a response packet. Upon receiving the response packet, $n_i$ encrypts the response with $s_i$ and sends the packet to $n_{i-1}$.
-When $\mathcal{S}$ receives the response, he may decrypt with each symmetric
-key successively, and can then read the response.\\\\
-%which responds with  list of node addresses and public keys to $\mathcal{S}$ describing the nodes that
-%will construct the path that a message will follow. \\\\
-The node servers (and Directory Node server) will be programmed with the Python
-programming language, and will use the Flask framework to handle concurrent
-requests. The Vagrant tool will be used to automate the creation of virtual
-machines which will simulate the nodes. Additionally, to save processing power,
-the Directory Node will run locally on the sender's machine for the purposes of
-the simulation.\\\\
-Furthermore, the NTRU cryptoscheme will be considered and investigated to
+determine where to send the packet after decrypting. $\mathcal{S}$ proceeds to
+send this many-layered ``onion'' of ciphers to the first node in the path.\\
+
+\noindent Each intermediate node $n_j$ behaves according to the exact same protocol. Upon receiving
+a packet, a node $n_j$ decrypts the packet with its symmetric key to expose $a_{j+1}$, the
+address of the next node $n_{j+1}$ in the path.  After sending the packet to $n_{j+1}$, $n_j$
+waits for a response packet.  When a response packet is received, $n_j$ encrypts the response with
+$s_j$ and sends the packet to $n_{j-1}$.  When $\mathcal{S}$ receives the response, he decrypts
+with each symmetric key successively (now in forward order), and can then read the response.\\
+
+\noindent All nodes will be implemented as TCP servers programmed with the Python programming
+language using the Flask framework to handle concurrent requests.  The Vagrant tool will be
+used to automate the creation of virtual machines which will simulate the nodes.  Additionally,
+to save processing power, the Directory Node will run locally on the sender's machine for the
+purposes of the simulation.\\
+
+\noindent Furthermore, the NTRU cryptoscheme will be considered and investigated to
 provide key exchange for communicating the $s_i$ keys, and can maintain
 security against quantum opponents.
 
@@ -107,8 +95,8 @@ testing of this project should be divided into two sections:
 		further testing, we may use the mentioned tools such as Brite or Orbis
 		to generate network topology to simulate characteristics in the
 		internet.
-    
-% As for the second section of testinng (performance) we gotta find some tools for network testing (i.e. nmap, wireshark) and talk about 
+
+% As for the second section of testinng (performance) we gotta find some tools for network testing (i.e. nmap, wireshark) and talk about
 % how we will benchmark those tests ina very high level manner
 
 \end{enumerate}
