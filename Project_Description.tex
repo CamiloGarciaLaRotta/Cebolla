@@ -10,17 +10,32 @@
 
 \begin{document}
 \noindent
-\large \textbf{ECSE 414 Intro. to Telecom. Networks} \hfill \textbf{Camilo Garcia La Rotta} \textbf{\#260657037} \\
-\large \textbf{Deliverable \#1 - Description}        \hfill \textbf{Jastaj Virdee} \textbf{\#260689027} \\
-\large \textbf{Topic: Onion Routing}                 \hfill \textbf{Dennis Liu} \textbf{\#260581270} \\
-\text{}                                              \hfill \textbf{Edward Zhao} \textbf{\#260690376}\\
-\text{}                                              \hfill \textbf{Harley Wiltzer} \textbf{\#260690006}\\
-\text{}                                              \hfill \textbf{Spiros-Daniel Mavroidakos} \textbf{\#260689391}\\
-\text{}                                              \hfill \textbf{Stuart Mashaal} \textbf{\#260639962}\\
+\large \textbf{ECSE414 - Intro to Telecom Networks\\Deliverable 1 - Project Description: Onion Routing: Group 10}\\
+Authors: C. Garcia La Rotta, D. Liu, E. Zhao, H. Wiltzer, J. Virdee, S.D. Mavroidakos, S. Mashaal\\
+September 29, 2017
+%Camilo Garcia La Rotta (260657037), Dennis Liu (260581270), Edward Zhao (260690376), Harley Wiltzer (260690006), Jastaj Virdee (260689027), Spiros-Daniel Mavroidakos (260689391), Stuart Mashaal (260639962)
+%\large \textbf{ECSE 414 Intro. to Telecom. Networks} \hfill \textbf{Camilo Garcia La Rotta} \textbf{\#260657037} \\
+%\large \textbf{Deliverable \#1 - Description}        \hfill \textbf{Jastaj Virdee} \textbf{\#260689027} \\
+%\large \textbf{Topic: Onion Routing}                 \hfill \textbf{Dennis Liu} \textbf{\#260581270} \\
+%\text{}                                              \hfill \textbf{Edward Zhao} \textbf{\#260690376}\\
+%\text{}                                              \hfill \textbf{Harley Wiltzer} \textbf{\#260690006}\\
+%\text{}                                              \hfill \textbf{Spiros-Daniel Mavroidakos} \textbf{\#260689391}\\
+%\text{}                                              \hfill \textbf{Stuart Mashaal} \textbf{\#260639962}\\
 
 \section*{Project Description}
+The goal of this project is to implement and design an Onion Routing protocol,
+which ideally allows for users to communicate completely anonymously over the
+internet. Communication with Onion Routing involves having servers on a network that some
+data is passed through with multiple layers of encryption. These encryption layers get decrypted as
+the message is passed along throughout the intermediate servers in the path.
+However, as opposed to proxy servers for example,
+the layered encryption ensures that no nodes along the
+message path are aware of who the sender was, so it is impossible to determine
+if a particular sender ever actually sent a message. Our Onion Routing
+system will support encryption on bidirectional communication to achieve this
+anonymity.\\
 
-Anonymity is an important feature of computer systems when communicating over a network. This project involves implementing a simplified version of onion routing. The system will include features of message encryption, redirection through intermediate nodes, and bi-directional communication. \\
+%Anonymity is an important feature of computer systems when communicating over a network. This project involves implementing a simplified version of onion routing. The system will include features of message encryption, redirection through intermediate nodes, and bi-directional communication. \\
 
 \noindent Performance of the system will also be assessed via simulation. A network topology which mimics characteristics of the internet will be used. Onion routing will be evaluated by comparing the lengths of routes taken by a packet using onion routing to one using shortest-path routing. Additional delay will also be included to calculate the total price of anonymity.
 
@@ -107,21 +122,42 @@ testing of this project should be divided into two sections:
 
 \end{enumerate}
 
-
 \section*{Work Division}
-\textbf{Development and Unit Testing:}
-	\begin{itemize}
-    \item Camilo Garcia La Rotta
-    \item Harley Wiltzer
-    \item Spiros-Daniel Mavroidakos
-    \item Stuart Mashaal
-	\end{itemize}
+The work for this project will be divided into two main subteams, one of which
+will be the development subteam, and the other will be the testing subteam. As
+it stands, Camilo, Harley, Spiros-Daniel, and Stuart will make up the
+development subteam, and Dennis, Edward, and Jastaj will make up the testing
+subteam. It has been decided that each team member will document his own work,
+and Harley has volunteered to manage and compile the documentation that
+everyone writes. Furthermore, due to the difficulty of testing this system,
+Spiros-Daniel has volunteered to help out the testing team, so that the testing
+team can have assistance with testing out the more intricate parts of the
+system.\\\\
+The development team will be in charge of developing the code and the software
+and network architectures. Furthermore, to follow a TDD paradigm, the
+development team will be in charge of writing unit tests for the features that
+they will be implementing.\\
+The testing team will be in charge of conducting thorough integration and
+system tests that should reveal the behavior of the system under ordinary and
+stressful circumstances. The testing team will then report bugs or improvement
+ideas to the development team as they find them. Furthermore, the testing team
+will be in charge of setting up and managing the Continuous Integration of our
+software.
 
-\noindent \textbf{Component and System Testing:}
-	\begin{itemize}
-    \item Edward Zhao
-    \item Jastaj Virdee
-    \item Dennis Liu
-	\end{itemize}
+%\section*{Work Division}
+%\textbf{Development and Unit Testing:}
+%	\begin{itemize}
+%    \item Camilo Garcia La Rotta
+%    \item Harley Wiltzer
+%    \item Spiros-Daniel Mavroidakos
+%    \item Stuart Mashaal
+%	\end{itemize}
+%
+%\noindent \textbf{Component and System Testing:}
+%	\begin{itemize}
+%    \item Edward Zhao
+%    \item Jastaj Virdee
+%    \item Dennis Liu
+%	\end{itemize}
 
 \end{document}
