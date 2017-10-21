@@ -17,8 +17,8 @@ from _thread import *       # for threaded client TCP connections
 ###############################################################################
 #   GLOBALS                                                                   #
 ###############################################################################
-HOST = None                 
-PORT = None                 
+HOST = None
+PORT = None
 MAX_CN = None               # maximum number of concurrent Circuit Numbers
 CNS = []                    # available Circuit Numbers
 NODES = []                  # active nodes in networks
@@ -29,7 +29,7 @@ directory_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 def parse_config():
     parser = configparser.ConfigParser()
     parser.read('network.conf')
-    
+
     config = {}
 
     if parser.has_section('network'):
@@ -42,15 +42,15 @@ def parse_config():
 
 # initializes global parameters based on an input config dict
 def init_params(config):
-    global HOST, PORT, MAX_CN, CNS 
-    
+    global HOST, PORT, MAX_CN, CNS
+
     HOST = config['host']
     PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(config['port'])
     MAX_CN = int(config['max_cn'])
     CNS.extend(range(MAX_CN))
-    
+
     random.shuffle(CNS)
-    
+
 
 # fills the NODES lsit with the machines in the LAN that are listening on PORT
 def query_network():
@@ -58,7 +58,7 @@ def query_network():
 
     for i in range(2,51):
         hostname = 'lab2-{}.cs.mcgill.ca'.format(i)
-        
+
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         timeout = s.connect_ex((hostname,PORT))
         s.close()
@@ -70,9 +70,9 @@ def query_network():
         NODES.append(hostname)
 
     random.shuffle(NODES)
-    
+
     print('There are {} node(s) in the network'.format(len(NODES)))
-    
+
 
 # returns the encryption key associated with an input hostname
 def get_key(hostname):
@@ -83,7 +83,7 @@ def get_key(hostname):
 # returns a unique CN and removes it from available CNs
 def pop_CN():
     if CNS:
-        cn = random.choice(CNS)    
+        cn = random.choice(CNS)
         idx = CNS.index(cn)
 
         return CNS.pop(idx)
@@ -101,14 +101,14 @@ def push_CN(cn):
 # in case of invalid input or no available CNs an empty object is returned
 def get_path(dst):
     path = {}
-    
+
     if dst in NODES:
         path_nodes = [NODES[i] for i in random.sample(range(len(NODES)),3)]
-        
+
         for i in range(3):
             key = 'n{}'.format(str(i))
             path[key] = {'hostname': path_nodes[i], 'key': get_key(path_nodes[i])}
-        
+
         try:
             path['CN'] = pop_CN()
         except IndexError as e:
@@ -123,7 +123,7 @@ def get_path(dst):
 # in case of invalid input or no available CNs an empty object is returned
 def threaded_client(conn):
     data = conn.recv(1024)
-        
+
     path = get_path(data.decode('utf-8').rstrip())
 
     conn.sendall(str.encode(path))
@@ -166,4 +166,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
