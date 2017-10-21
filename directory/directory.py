@@ -46,7 +46,7 @@ def query_network():
 # returns the encryption key associated with an input hostname
 def get_key(hostname):
     # TODO implement encryption key mgmt
-    return "bigpp69"
+    return "TODO_KEY_MGMT"
 
 # returns a unique circuit number
 def get_CN():
@@ -55,7 +55,8 @@ def get_CN():
 
 # makes the input CN available for future reuse
 def pop_CN(cn):
-    # TODO implement Circuit Number (CN) mgmt 
+    # TODO implement Circuit Number (CN) mgmt
+    pass
 
 # return the string of a JSON encoded object
 # which contains the hostname, keys and CN for a random path
