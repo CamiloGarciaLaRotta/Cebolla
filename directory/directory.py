@@ -27,18 +27,9 @@ directory_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # parser a config file and returns a dict with the network parameters
 def parse_config():
-    parser = configparser.ConfigParser()
-    parser.read('network.conf')
-
-    config = {}
-
-    if parser.has_section('network'):
-        items = parser.items('network')
-        for item in items:
-            config[item[0]] = item[1]
-
+    config = configparser.ConfigParser()
+    config.read('network.conf')
     return config
-
 
 # initializes global parameters based on an input config dict
 def init_params(config):
@@ -151,10 +142,6 @@ def stop_server():
 
 def main():
     config = parse_config()
-    if config:
-        init_params(config)
-    else:
-        sys.exit("Unable to open network.conf")
 
     query_network()
     try:
