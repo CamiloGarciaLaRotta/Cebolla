@@ -46,7 +46,7 @@ def main():
 
 
 ###############################################################################
-#   HELPERS                                                                   #
+#   INITIALIZATION HELPERS                                                    #
 ###############################################################################
 
 # parse config file, return dict-like ConfigParser object
@@ -92,27 +92,34 @@ def query_network():
     print('There are {} node(s) in the network'.format(len(NODES)))
 
 
-# returns the encryption key associated with an input hostname
-def get_key(hostname):
-    # TODO implement encryption key mgmt
-    return "TODO_KEY_MGMT"
 
+# creates worker threads for the TCP server
+def start_server():
+    directory_socket.bind((HOST,PORT))
+    directory_socket.listen(len(NODES))
 
-# returns a unique CN and removes it from available CNs
-def pop_CN():
-    if CNS:
-        cn = random.choice(CNS)
-        idx = CNS.index(cn)
+    print('Directory Node UP')
 
-        return CNS.pop(idx)
-    else:
-        raise IndexError('No more available CNs')
+    while True:
+        conn, addr = directory_socket.accept()
+        print('Connected to: {}:{}'.format(addr[0], str(addr[1])))
+        start_new_thread(threaded_client,(conn,))
 
+def stop_server():
+    directory_socket.close()
+    print('Directiry Node DOWN')
 
-# makes the input CN available for future reuse
-def push_CN(cn):
-    CNS.append(cn)
+# thread function wich establishes TCP connection with a client
+# recieves a destination node and returns a random path
+# in case of invalid input or no available CNs an empty object is returned
+def threaded_client(conn):
+    data = conn.recv(1024)
 
+    path = get_path(data.decode('utf-8').rstrip())
+
+    conn.sendall(str.encode(path))
+
+    conn.close()
 
 # return the string of a JSON encoded object
 # which contains the hostname, keys and CN for a random path
@@ -135,36 +142,25 @@ def get_path(dst):
 
     return json.dumps(path)
 
+# returns the encryption key associated with an input hostname
+def get_key(hostname):
+    # TODO implement encryption key mgmt
+    return "TODO_KEY_MGMT"
 
-# thread function wich establishes TCP connection with a client
-# recieves a destination node and returns a random path
-# in case of invalid input or no available CNs an empty object is returned
-def threaded_client(conn):
-    data = conn.recv(1024)
+# returns a unique CN and removes it from available CNs
+def pop_CN():
+    if CNS:
+        cn = random.choice(CNS)
+        idx = CNS.index(cn)
 
-    path = get_path(data.decode('utf-8').rstrip())
+        return CNS.pop(idx)
+    else:
+        raise IndexError('No more available CNs')
 
-    conn.sendall(str.encode(path))
+# makes the input CN available for future reuse
+def push_CN(cn):
+    CNS.append(cn)
 
-    conn.close()
-
-
-# creates worker threads for the TCP server
-def start_server():
-    directory_socket.bind((HOST,PORT))
-    directory_socket.listen(len(NODES))
-
-    print('Directory Node UP')
-
-    while True:
-        conn, addr = directory_socket.accept()
-        print('Connected to: {}:{}'.format(addr[0], str(addr[1])))
-        start_new_thread(threaded_client,(conn,))
-
-
-def stop_server():
-    directory_socket.close()
-    print('Directiry Node DOWN')
 
 
 ###############################################################################
