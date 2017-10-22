@@ -53,7 +53,6 @@ def main():
 def parse_config():
     config = configparser.ConfigParser()
     config.read('network.conf')
-    print(config._sections)
     return config
 
 # init global params from ConfigParser object
@@ -78,7 +77,6 @@ def query_network():
     print('Querying the network ...')
 
     for node_name in NODES:
-        print(node_name)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         timeout = s.connect_ex((node_name,PORT))
         s.close()
