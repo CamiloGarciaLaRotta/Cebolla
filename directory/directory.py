@@ -19,11 +19,32 @@ from _thread import *       # for threaded client TCP connections
 ###############################################################################
 HOST = None
 PORT = None
+
 MAX_CN = None               # maximum number of concurrent Circuit Numbers
 CNS = []                    # available Circuit Numbers
+
 NODES = []                  # active nodes in networks
+
 directory_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+
+###############################################################################
+#   MAIN                                                                      #
+###############################################################################
+def main():
+    config = parse_config()
+    init_params(config)
+
+    query_network()
+    try:
+        start_server()
+    except (socket.error, KeyboardInterrupt) as e:
+        stop_server()
+        sys.exit(str(e))
+
+###############################################################################
+#   HELPERS                                                                   #
+###############################################################################
 
 # parse config file, return dict-like ConfigParser object
 def parse_config():
@@ -142,17 +163,8 @@ def stop_server():
     print('Directiry Node DOWN')
 
 
-def main():
-    config = parse_config()
-    init_params(config)
-
-    query_network()
-    try:
-        start_server()
-    except (socket.error, KeyboardInterrupt) as e:
-        stop_server()
-        sys.exit(str(e))
-
-
+###############################################################################
+#   RUN MAIN                                                                  #
+###############################################################################
 if __name__ == '__main__':
     main()
