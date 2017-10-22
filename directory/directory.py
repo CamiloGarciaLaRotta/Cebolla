@@ -23,7 +23,9 @@ PORT = None
 MAX_CN = None               # maximum number of concurrent Circuit Numbers
 CNS = []                    # available Circuit Numbers
 
-NODES = []                  # active nodes in networks
+NODES = []                  # active nodes in onion network
+MAX_NODES = None            # max number of nodes in onion network
+NODE_FORMAT = None          # python format string of nodes' domain names
 
 directory_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -42,6 +44,7 @@ def main():
         stop_server()
         sys.exit(str(e))
 
+
 ###############################################################################
 #   HELPERS                                                                   #
 ###############################################################################
@@ -50,31 +53,34 @@ def main():
 def parse_config():
     config = configparser.ConfigParser()
     config.read('network.conf')
+    print(config._sections)
     return config
 
-# initializes global parameters based on an input config dict
+# init global params from ConfigParser object
 def init_params(config):
-    global HOST, PORT, MAX_CN, CNS
+    nconfig = config['NETWORK']
+    global HOST, PORT, MAX_CN, CNS, MAX_NODES, NODE_FORMAT, NODES
 
-    network_config = config['NETWORK']
-    HOST = network_config['HOST']
-    PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(network_config['PORT'])
-    MAX_CN = int(network_config['MAX_CN'])
+    HOST = nconfig['host']
+    PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(nconfig['port'])
+
+    MAX_CN = int(nconfig['max_cn'])
     CNS.extend(range(MAX_CN))
-    print("HOST: {0}, PORT: {1}, MAX_CN: {2}".format(HOST, PORT, MAX_CN))
-
     random.shuffle(CNS)
+
+    MAX_NODES = int(nconfig['max_nodes'])
+    NODE_FORMAT = nconfig['node_format']
+    NODES = [NODE_FORMAT.format(i) for i in range(1,MAX_NODES + 1)]
 
 
 # fills the NODES lsit with the machines in the LAN that are listening on PORT
 def query_network():
     print('Querying the network ...')
 
-    for i in range(2,51):
-        hostname = 'lab2-{}.cs.mcgill.ca'.format(i)
-
+    for node_name in NODES:
+        print(node_name)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        timeout = s.connect_ex((hostname,PORT))
+        timeout = s.connect_ex((node_name,PORT))
         s.close()
 
         # This functionality was already tested,
