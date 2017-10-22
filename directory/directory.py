@@ -25,7 +25,7 @@ NODES = []                  # active nodes in networks
 directory_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-# parser a config file and returns a dict with the network parameters
+# parse config file, return dict-like ConfigParser object
 def parse_config():
     config = configparser.ConfigParser()
     config.read('network.conf')
@@ -35,10 +35,12 @@ def parse_config():
 def init_params(config):
     global HOST, PORT, MAX_CN, CNS
 
-    HOST = config['host']
-    PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(config['port'])
-    MAX_CN = int(config['max_cn'])
+    network_config = config['NETWORK']
+    HOST = network_config['HOST']
+    PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(network_config['PORT'])
+    MAX_CN = int(network_config['MAX_CN'])
     CNS.extend(range(MAX_CN))
+    print("HOST: {0}, PORT: {1}, MAX_CN: {2}".format(HOST, PORT, MAX_CN))
 
     random.shuffle(CNS)
 
@@ -142,6 +144,7 @@ def stop_server():
 
 def main():
     config = parse_config()
+    init_params(config)
 
     query_network()
     try:
