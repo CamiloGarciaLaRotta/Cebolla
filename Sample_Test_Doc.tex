@@ -1,0 +1,88 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts, mathtools}
+\usepackage{enumitem}                   
+\usepackage{listings}                   % insert code
+\usepackage{graphicx}                   % Insert images
+%\graphicspath{ {images/} }
+\usepackage[letterpaper, margin=1.5cm]{geometry}
+\usepackage[singlespacing]{setspace}
+
+\begin{document}
+\noindent
+\large \textbf{ECSE 414 Intro. to Telecom. Networks}  \\
+\large \textbf{Sample Testing Document} 
+\tableofcontents
+
+\section{Type of testing (Black box , integration, etc)}
+
+\subsection{Class Under Test}
+\textbf{Testing assigned to:} Name \\
+\textbf{Name of class:} Class Name\\
+\textbf{Description of class:} What it does.\\
+\textbf{Purpose:} Why it's needed and why it's used.\\
+\textbf{Usage:} Where its used. (What other components will be using this class for example)\\
+\textbf{Class Methods:} 
+\begin{enumerate}
+    \item Method 1 Name:
+    \begin{enumerate}
+        \item Method Description: Input, output
+        \item Tested: Yes or No: If no, give a short explanation
+    \end{enumerate}
+    \item Method 2 Name:
+    \begin{enumerate}
+        \item Method Description: Input, output
+        \item Tested: Yes or No: If no, give a short explanation
+    \end{enumerate}
+\end{enumerate}
+\subsection{Test cases}
+Methods Being Tested:
+\begin{enumerate}
+    \item Method 1
+    \item method 2 
+\end{enumerate}
+
+\subsubsection{Test case 1: }
+\textbf{Test Case Description:\\} What is being tested and why.\\
+\textbf{Steps to perform test: \\} Explain the steps to perform the test\\
+\textbf{Test case Number: \\} Give it a label: example:TC1
+
+\subsubsection{Test case 2: }
+\textbf{Test Case Description:\\} What is being tested and why.\\
+\textbf{Steps to perform test: \\} Explain the steps to perform the test\\
+\textbf{Test case Number: \\} Give it a label: example:TC2
+
+\subsubsection{Test Plan}
+\begin{tabular}{|c| c| c| c| c|} 
+ \hline
+ Test Case & Input & Expected Output & Actual Results & Verdict \\  
+ \hline
+ TC1 & input for test case &  Expected output from input &  Results from performing TC1& Pass or Fail\\ 
+ \hline
+ TC2 & x = 4 & True & True & Pass\\
+     & y = 4 &      &       &     \\
+ \hline
+\end{tabular}
+
+\subsection{Test Results}
+
+\subsubsection{Test Summary:}
+\textbf{Passed: } Number of cases that passed ex. 7 \\
+\textbf{Failed: } Number of cases that failed ex. 3 \\
+\textbf{Success Rate: } Percentage of passed test cases ex. 70\% or 7/10 \\
+\textbf{Failed Test Cases: }
+
+\subsubsection{Result Analysis}
+\textbf{Failed Test Cases: }
+\begin{enumerate}
+    \item TC1
+    \item TC3
+    \item TC10
+\end{enumerate}
+
+\begin{flushleft}
+Explain the failed test cases and what needs to be done and plans on retesting.
+\end{flushleft}
+
+\end{document}
+
