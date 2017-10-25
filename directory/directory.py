@@ -84,7 +84,7 @@ def query_network():
         # This functionality was already tested,
         # commented out to avoid having to setup TCP clients  while testing
         #        if timeout or hostname in NODES:
-        #            NODES.remove(hostname)
+        #            NODES.remove(node_name)
 
     random.shuffle(NODES)
 
