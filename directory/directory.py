@@ -17,118 +17,79 @@ from _thread import *       # for threaded client TCP connections
 ###############################################################################
 #   GLOBALS                                                                   #
 ###############################################################################
-HOST = None                 
-PORT = None                 
+HOST = None
+PORT = None
+
 MAX_CN = None               # maximum number of concurrent Circuit Numbers
 CNS = []                    # available Circuit Numbers
-NODES = []                  # active nodes in networks
+
+NODES = []                  # active nodes in onion network
+MAX_NODES = None            # max number of nodes in onion network
+NODE_FORMAT = None          # python format string of nodes' domain names
+
 directory_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-# parser a config file and returns a dict with the network parameters
+###############################################################################
+#   MAIN                                                                      #
+###############################################################################
+def main():
+    config = parse_config()
+    init_params(config)
+
+    query_network()
+    try:
+        start_server()
+    except (socket.error, KeyboardInterrupt) as e:
+        stop_server()
+        sys.exit(str(e))
+
+
+###############################################################################
+#   INITIALIZATION HELPERS                                                    #
+###############################################################################
+
+# parse config file, return dict-like ConfigParser object
 def parse_config():
-    parser = configparser.ConfigParser()
-    parser.read('network.conf')
-    
-    config = {}
-
-    if parser.has_section('network'):
-        items = parser.items('network')
-        for item in items:
-            config[item[0]] = item[1]
-
+    config = configparser.ConfigParser()
+    config.read('network.conf')
     return config
 
-
-# initializes global parameters based on an input config dict
+# init global params from ConfigParser object
 def init_params(config):
-    global HOST, PORT, MAX_CN, CNS 
-    
-    HOST = config['host']
-    PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(config['port'])
-    MAX_CN = int(config['max_cn'])
+    nconfig = config['NETWORK']
+    global HOST, PORT, MAX_CN, CNS, MAX_NODES, NODE_FORMAT, NODES
+
+    HOST = nconfig['host']
+    PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(nconfig['port'])
+
+    MAX_CN = int(nconfig['max_cn'])
     CNS.extend(range(MAX_CN))
-    
     random.shuffle(CNS)
-    
+
+    MAX_NODES = int(nconfig['max_nodes'])
+    NODE_FORMAT = nconfig['node_format']
+    NODES = [NODE_FORMAT.format(i) for i in range(2,MAX_NODES + 1)]
+
 
 # fills the NODES lsit with the machines in the LAN that are listening on PORT
 def query_network():
     print('Querying the network ...')
 
-    for i in range(2,51):
-        hostname = 'lab2-{}.cs.mcgill.ca'.format(i)
-        
+    for node_name in NODES:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        timeout = s.connect_ex((hostname,PORT))
+        timeout = s.connect_ex((node_name,PORT))
         s.close()
 
         # This functionality was already tested,
         # commented out to avoid having to setup TCP clients  while testing
-        #        if not timeout and hostname not in NODES:
-        #            NODES.append(hostname)
-        NODES.append(hostname)
+        #        if timeout or hostname in NODES:
+        #            NODES.remove(node_name)
 
     random.shuffle(NODES)
-    
+
     print('There are {} node(s) in the network'.format(len(NODES)))
-    
 
-# returns the encryption key associated with an input hostname
-def get_key(hostname):
-    # TODO implement encryption key mgmt
-    return "TODO_KEY_MGMT"
-
-
-# returns a unique CN and removes it from available CNs
-def pop_CN():
-    if CNS:
-        cn = random.choice(CNS)    
-        idx = CNS.index(cn)
-
-        return CNS.pop(idx)
-    else:
-        raise IndexError('No more available CNs')
-
-
-# makes the input CN available for future reuse
-def push_CN(cn):
-    CNS.append(cn)
-
-
-# return the string of a JSON encoded object
-# which contains the hostname, keys and CN for a random path
-# in case of invalid input or no available CNs an empty object is returned
-def get_path(dst):
-    path = {}
-    
-    if dst in NODES:
-        path_nodes = [NODES[i] for i in random.sample(range(len(NODES)),3)]
-        
-        for i in range(3):
-            key = 'n{}'.format(str(i))
-            path[key] = {'hostname': path_nodes[i], 'key': get_key(path_nodes[i])}
-        
-        try:
-            path['CN'] = pop_CN()
-        except IndexError as e:
-            print(str(e))
-            path = {}
-
-    return json.dumps(path)
-
-
-# thread function wich establishes TCP connection with a client
-# recieves a destination node and returns a random path
-# in case of invalid input or no available CNs an empty object is returned
-def threaded_client(conn):
-    data = conn.recv(1024)
-        
-    path = get_path(data.decode('utf-8').rstrip())
-
-    conn.sendall(str.encode(path))
-
-    conn.close()
 
 
 # creates worker threads for the TCP server
@@ -143,27 +104,66 @@ def start_server():
         print('Connected to: {}:{}'.format(addr[0], str(addr[1])))
         start_new_thread(threaded_client,(conn,))
 
-
 def stop_server():
     directory_socket.close()
     print('Directiry Node DOWN')
 
+# thread function wich establishes TCP connection with a client
+# recieves a destination node and returns a random path
+# in case of invalid input or no available CNs an empty object is returned
+def threaded_client(conn):
+    data = conn.recv(1024)
 
-def main():
-    config = parse_config()
-    if config:
-        init_params(config)
+    path = get_path(data.decode('utf-8').rstrip())
+
+    conn.sendall(str.encode(path))
+
+    conn.close()
+
+# return the string of a JSON encoded object
+# which contains the hostname, keys and CN for a random path
+# in case of invalid input or no available CNs an empty object is returned
+def get_path(dst):
+    path = {}
+
+    if dst in NODES:
+        path_nodes = [NODES[i] for i in random.sample(range(len(NODES)),3)]
+
+        for i in range(3):
+            key = 'n{}'.format(str(i))
+            path[key] = {'hostname': path_nodes[i], 'key': get_key(path_nodes[i])}
+
+        try:
+            path['CN'] = pop_CN()
+        except IndexError as e:
+            print(str(e))
+            path = {}
+
+    return json.dumps(path)
+
+# returns the encryption key associated with an input hostname
+def get_key(hostname):
+    # TODO implement encryption key mgmt
+    return "TODO_KEY_MGMT"
+
+# returns a unique CN and removes it from available CNs
+def pop_CN():
+    if CNS:
+        cn = random.choice(CNS)
+        idx = CNS.index(cn)
+
+        return CNS.pop(idx)
     else:
-        sys.exit("Unable to open network.conf")
+        raise IndexError('No more available CNs')
 
-    query_network()
-    try:
-        start_server()
-    except (socket.error, KeyboardInterrupt) as e:
-        stop_server()
-        sys.exit(str(e))
+# makes the input CN available for future reuse
+def push_CN(cn):
+    CNS.append(cn)
 
 
+
+###############################################################################
+#   RUN MAIN                                                                  #
+###############################################################################
 if __name__ == '__main__':
     main()
-

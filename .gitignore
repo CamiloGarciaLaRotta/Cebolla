@@ -1,3 +1,6 @@
+# general bs
+*.swp
+
 # tex-related bs
 *.aux
 *.log
