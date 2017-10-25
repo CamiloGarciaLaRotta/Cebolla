@@ -69,7 +69,7 @@ def init_params(config):
 
     MAX_NODES = int(nconfig['max_nodes'])
     NODE_FORMAT = nconfig['node_format']
-    NODES = [NODE_FORMAT.format(i) for i in range(1,MAX_NODES + 1)]
+    NODES = [NODE_FORMAT.format(i) for i in range(2,MAX_NODES + 1)]
 
 
 # fills the NODES lsit with the machines in the LAN that are listening on PORT
