@@ -24,6 +24,7 @@ while(True):
         break
     addr = int(d["addr"])
     packet = d["data"]
+    print('Node ' + str(addr) + ' receives packet of length ' + str(len(packet)))
     packet = onion.onions[addr].peel_layer(packet)
     print('Node ' + str(addr) + ' creates:')
     print(packet)
