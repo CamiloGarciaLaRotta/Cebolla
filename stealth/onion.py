@@ -10,6 +10,8 @@ from Crypto.Random.Fortuna.FortunaGenerator import AESGenerator
 
 PATH_LENGTH = 3
 
+MAX_MESSAGE_SIZE = 4096
+
 onions = []
 
 class Originator(object):
@@ -34,6 +36,8 @@ class Originator(object):
         msg = machine.encrypt(msg)
         if first:
             print('DEBUG: Doing second encryption for innermost layer')
+            padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(msg)
+            msg = '0' * padding + msg
             machine = AESProdigy(self.key, chr(0) * 16)
             msg = machine.encrypt(msg)
         return JSONMessage(MessageType.Onion, self.path[node][0], msg)
@@ -64,9 +68,9 @@ class OnionNode(object):
         data = json.loads(machine.decrypt(garbage))
         print('DEBUG: Length of unpadded plaintext = ' + str(len(json.dumps(data))))
         if(data["type"] != "MessageType.Data"): 
-            padding = len(cipher) - len(json.dumps(data))
+            padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(data["data"])
             print('DEBUG: Amount of padding necessary = ' + str(padding))
-            data["data"] = '0' * (padding - len(json.dumps(data)) + len(data["data"])) + data["data"]
+            data["data"] = '0' * (padding) + data["data"]
             print('DEBUG: Length of padded plaintext = ' + str(len(json.dumps(data))))
             machine = AESProdigy(self.key, 16 * chr(0).encode())
             data["data"] = machine.encrypt(data["data"])

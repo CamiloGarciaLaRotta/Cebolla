@@ -9,7 +9,8 @@ from onion import OnionNode
 # For the sake of the test, the message intended for the destination is typed as MessageType.Data, to give the while loop an edge condition
 
 originator = Originator()
-packet = originator.create_onion('i also hate nvidia', 'Linus Torvalds')
+msg = str(stealth.get_random_key(4096))[0:4096]
+packet = originator.create_onion(msg, 'Linus Torvalds')
 print('Originator creates:')
 print(packet.to_dict())
 print('')
@@ -21,6 +22,10 @@ while(True):
         print('To: ' + d["addr"])
         print(d["data"])
         print('========================')
+        if d["data"] == msg:
+            print('Successful')
+        else:
+            print('Fail')
         break
     addr = int(d["addr"])
     packet = d["data"]
