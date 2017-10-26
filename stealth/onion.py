@@ -21,6 +21,8 @@ class Originator(object):
         self.gens = [AESGenerator() for i in range(len(self.path))]
         for c in range(len(self.path)):
             self.gens[c].reseed(self.path[c][1])
+        self.rng = AESGenerator()
+        self.rng.reseed(self.key[8:16])
 
     # Creates the full encryption-layered message
     def create_onion(self, msg, dst):
@@ -37,7 +39,7 @@ class Originator(object):
         if first:
             padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(msg)
             msg = add_padding(msg)
-            machine = AESProdigy(self.key, chr(0) * 16)
+            machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
             msg = machine.encrypt(msg)
         return JSONMessage(MessageType.Onion, self.path[node][0], msg)
 
@@ -46,19 +48,23 @@ class OnionNode(object):
         self.key =  ''
         self.prevKey = ''
         self.rng = AESGenerator()
+        self.prevrng = AESGenerator()
+        self.nextrng = AESGenerator()
     
     def set_key(self, key):
         self.key = key
+        self.nextrng.reseed(self.key[8:16])
 
     def set_prev_key(self, key):
         self.prevKey = key
+        self.prevrng.reseed(key[8:16])
 
     def set_seed(self, seed):
         self.rng.reseed(seed)
 
     # Decrypts an onion layer to retrieve the underlying JSON for the next layer
     def peel_layer(self, cipher):
-        machine = AESProdigy(self.prevKey, chr(0) * 16)
+        machine = AESProdigy(self.prevKey, self.prevrng.pseudo_random_data(16))
         garbage = machine.decrypt(cipher)
         garbage = remove_padding(garbage)
         machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
@@ -66,7 +72,7 @@ class OnionNode(object):
         if(data["type"] != "MessageType.Data"): 
             padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(data["data"])
             data["data"] = add_padding(data["data"])
-            machine = AESProdigy(self.key, 16 * chr(0).encode())
+            machine = AESProdigy(self.key, self.nextrng.pseudo_random_data(16))
             data["data"] = machine.encrypt(data["data"])
         return data
 
