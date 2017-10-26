@@ -1,4 +1,5 @@
 import onion
+import random
 import stealth
 from onion import Originator
 from onion import OnionNode
@@ -9,7 +10,7 @@ from onion import OnionNode
 # For the sake of the test, the message intended for the destination is typed as MessageType.Data, to give the while loop an edge condition
 
 originator = Originator()
-msg = str(stealth.get_random_key(4096))[0:4096]
+msg = ''.join([random.choice('abcdefghijklmnopqrstuvwxyz0123456789') for _ in range(0,4096)])
 packet = originator.create_onion(msg, 'Linus Torvalds')
 print('Originator creates:')
 print(packet.to_dict())

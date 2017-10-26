@@ -35,9 +35,8 @@ class Originator(object):
         machine = AESProdigy(self.path[node][1], self.gens[node].pseudo_random_data(16))
         msg = machine.encrypt(msg)
         if first:
-            print('DEBUG: Doing second encryption for innermost layer')
             padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(msg)
-            msg = '0' * padding + msg
+            msg = add_padding(msg)
             machine = AESProdigy(self.key, chr(0) * 16)
             msg = machine.encrypt(msg)
         return JSONMessage(MessageType.Onion, self.path[node][0], msg)
@@ -59,22 +58,16 @@ class OnionNode(object):
 
     # Decrypts an onion layer to retrieve the underlying JSON for the next layer
     def peel_layer(self, cipher):
-        print('DEBUG: Length of cipher = ' + str(len(cipher)))
         machine = AESProdigy(self.prevKey, chr(0) * 16)
         garbage = machine.decrypt(cipher)
-        while garbage[0] == '0':
-            garbage = garbage[1:]
+        garbage = remove_padding(garbage)
         machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
         data = json.loads(machine.decrypt(garbage))
-        print('DEBUG: Length of unpadded plaintext = ' + str(len(json.dumps(data))))
         if(data["type"] != "MessageType.Data"): 
             padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(data["data"])
-            print('DEBUG: Amount of padding necessary = ' + str(padding))
-            data["data"] = '0' * (padding) + data["data"]
-            print('DEBUG: Length of padded plaintext = ' + str(len(json.dumps(data))))
+            data["data"] = add_padding(data["data"])
             machine = AESProdigy(self.key, 16 * chr(0).encode())
             data["data"] = machine.encrypt(data["data"])
-            print('DEBUG: Length of new ciphertext = ' + str(len(json.dumps(data))))
         return data
 
 # Temporary until we merge with the directory node code
@@ -93,3 +86,14 @@ def dummy_get_onion_circuit(key):
         onions.append(onion)
     return path
 
+def remove_padding(msg):
+    for c in range(0, len(msg)):
+        if c + 3 <= len(msg):
+            if msg[c] == '*' and msg[c+1] == '*' and msg[c+2] == '*':
+                return msg[c+3:]
+    return msg
+
+def add_padding(msg):
+    padding_amount = PATH_LENGTH * MAX_MESSAGE_SIZE - len(msg) - 3
+    rand = ''.join([random.choice('abcdefghijklmnopqrstuvwxyz1234567890') for _ in range(0,padding_amount)])
+    return rand + '***' + msg
