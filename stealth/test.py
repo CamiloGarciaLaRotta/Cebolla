@@ -15,14 +15,14 @@ class TestOnioning(unittest.TestCase):
     def test_forward_onion(self):
         originator = Originator()
         msg = ''.join([random.choice('abcdefghijklmnopqrstuvwxyz0123456789') for _ in range(0,4096)])
-        packet = originator.create_onion(msg, 'Linus Torvalds')
+        packet = originator.create_onion(msg, 'Linus Torvalds', 3, onion.MessageType.Data)
         print('Originator creates:')
         print(packet.to_dict())
         print('')
 
         d = packet.to_dict()
         while(True):
-            if d["type"] == "MessageType.Data":
+            if d["type"] == "Data":
                 print('========================')
                 print('To: ' + d["addr"])
                 print(d["data"])

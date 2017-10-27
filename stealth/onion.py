@@ -2,9 +2,9 @@ import jmsg
 import json
 import random
 import stealth
+from enum import Enum
 from itertools import dropwhile
 from jmsg import JSONMessage
-from jmsg import MessageType
 from stealth import AESProdigy
 from Crypto.Random.Fortuna.FortunaGenerator import AESGenerator
 
@@ -13,6 +13,11 @@ PATH_LENGTH = 3
 MAX_MESSAGE_SIZE = 4096
 
 onions = []
+
+class MessageType(Enum):
+    Onion = 1
+    Data = 2
+    Establish = 3
 
 class Originator(object):
     def __init__(self):
@@ -25,9 +30,12 @@ class Originator(object):
         self.rng.reseed(self.key[8:16])
 
     # Creates the full encryption-layered message
-    def create_onion(self, msg, dst):
-        msg = JSONMessage(MessageType.Data, dst, msg) # Mark the destination message as MessageType.Data for now, just for testing
-        for i in range(len(self.path)-1,0,-1): # Cycles list in reverse order
+    def create_onion(self, msg, dst, depth, mtype):
+        msg = {
+            MessageType.Data: JSONMessage("Data", dst, msg), 
+            MessageType.Establish: JSONMessage("Establish", dst, msg)
+            }[mtype]
+        for i in range(depth-1,0,-1): # Cycles list in reverse order
             msg = self.add_layer(msg.to_string(), i, False)
         msg = self.add_layer(msg.to_string(), 0, True)
         return msg
@@ -41,7 +49,7 @@ class Originator(object):
             msg = add_padding(msg)
             machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
             msg = machine.encrypt(msg)
-        return JSONMessage(MessageType.Onion, self.path[node][0], msg)
+        return JSONMessage("Onion", self.path[node][0], msg)
 
 class OnionNode(object):
     def __init__(self):
@@ -69,7 +77,7 @@ class OnionNode(object):
         garbage = remove_padding(garbage)
         machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
         data = json.loads(machine.decrypt(garbage))
-        if(data["type"] != "MessageType.Data"): 
+        if(data["type"] != "Data"): 
             padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(data["data"])
             data["data"] = add_padding(data["data"])
             machine = AESProdigy(self.key, self.nextrng.pseudo_random_data(16))

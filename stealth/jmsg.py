@@ -1,9 +1,4 @@
 import json
-from enum import Enum
-
-class MessageType(Enum):
-    Onion = 1
-    Data = 2
 
 class JSONMessage(object):
     def __init__(self, message_type, addr, msg):

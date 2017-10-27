@@ -12,14 +12,14 @@ originator = Originator()
 while True:
     msg = raw_input("Enter message: ")
     address = raw_input("Enter destination: ")
-    packet = originator.create_onion(msg, address)
+    packet = originator.create_onion(msg, address, 3, onion.MessageType.Data)
     print('Originator creates:')
     print(packet.to_dict())
     print('')
 
     d = packet.to_dict()
     while(True):
-        if d["type"] == "MessageType.Data":
+        if d["type"] == "Data":
             print('========================')
             print('To: ' + d["addr"])
             print(d["data"])
