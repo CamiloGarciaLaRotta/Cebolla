@@ -1,82 +1,77 @@
-import sys                  # for CL argument parsing
+import argparse             # for command-line argument parsing
 import json                 # for encoding data sent through TCP
 import random               # for shuffling node indices during path selection
 import socket               # for TCP communication
-import configparser         # for parsing the config file
 from _thread import *       # for threaded client TCP connections
 
 ###############################################################################
 #                                                                             #
 #   TODO                                                                      #
-#    - implement encryption key mgmt                                          #
-#    - implement TLS                                                          #
+#    - incorporate encryption key mgmt                                        #
 #                                                                             #
 ###############################################################################
 
 
 ###############################################################################
+#   CLI ARGS                                                                  #
+###############################################################################
+
+parser = argparse.ArgumentParser() # instantiate cli args parser
+
+# define cli args
+parser.add_argument("port", help="port to listen on", type=int)
+parser.add_argument("max_nodes", help="qty of nodes in network", type=int)
+
+args = parser.parse_args() # parse the args
+
+# validate args against conditions
+if args.max_nodes > 50 or args.max_nodes < 1: # no more than 50 nodes
+    parser.error("max_nodes must satisfy: 0 < max_nodes < 50")
+if args.port < 5551 or args.port > 5557: # 7 group members, each get a port for testing
+    parser.error("port must satisfy: 5551 <= port < 5557")
+
+###############################################################################
 #   GLOBALS                                                                   #
 ###############################################################################
 
-HOST = None
-PORT = None
+HOST = ""           # empty string => all IPs of this machine
+PORT = args.port    # port for server to listen on, cli arg
 
-MAX_CN = None               # maximum number of concurrent Circuit Numbers
-CNS = []                    # available Circuit Numbers
+MAX_NODES = args.max_nodes # max number of nodes in onion network
+NODE_FORMAT = "cs-{}.cs.mcgill.ca" # python format string of nodes' domain names
+NODES = [NODE_FORMAT.format(i) for i in range(1, MAX_NODES+1)] # all nodenames
 
-NODES = []                  # active nodes in onion network
-MAX_NODES = None            # max number of nodes in onion network
-NODE_FORMAT = None          # python format string of nodes' domain names
+# socket listens on HOST:PORT
+LISTEN_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+LISTEN_SOCKET.bind((HOST, PORT))
+LISTEN_SOCKET.listen(MAX_NODES)
 
-directory_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+print("congratz you parsed the args")
+exit()
 
 ###############################################################################
 #   MAIN                                                                      #
 ###############################################################################
 
 def main():
-    config = parse_config()
-    init_params(config)
+    global NODES
 
-    query_network()
+    NODES = NODES.map(query_node) # find which nodes are activated
+    NODES = list( zip(NODES, NODES.map(get_node_pubkey)) ) # and get their pubkeys
 
-    try:
-        start_server()
-    except (socket.error, KeyboardInterrupt) as e:
-        stop_server()
-        sys.exit(str(e))
+    # try:
+        # start_server()
+    # except (socket.error, KeyboardInterrupt) as e:
+        # stop_server()
+        # sys.exit(str(e))
 
 
 ###############################################################################
-#   INITIALIZATION HELPERS                                                    #
+#   INITIALIZE NODES LIST                                                     #
 ###############################################################################
-
-# parse config file, return dict-like ConfigParser object
-def parse_config():
-    config = configparser.ConfigParser()
-    config.read('network.conf')
-    return config
-
-# init global params from ConfigParser object
-def init_params(config):
-    nconfig = config['NETWORK']
-    global HOST, PORT, MAX_CN, CNS, MAX_NODES, NODE_FORMAT, NODES
-
-    HOST = nconfig['host']
-    PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(nconfig['port'])
-
-    MAX_CN = int(nconfig['max_cn'])
-    CNS.extend(range(MAX_CN))
-    random.shuffle(CNS)
-
-    MAX_NODES = int(nconfig['max_nodes'])
-    NODE_FORMAT = nconfig['node_format']
-    NODES = [NODE_FORMAT.format(i) for i in range(2,MAX_NODES + 1)]
-
 
 # fills the NODES lsit with the machines in the LAN that are listening on PORT
-def query_network():
+def query_node():
     print('Querying the network ...')
 
     for node_name in NODES:
