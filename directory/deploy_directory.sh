@@ -52,5 +52,7 @@ fi
 
 # DO THE THINGS
 
-ssh "$user"@cs-1.cs.mcgill.ca \
-  "cd $dirCebolla; git checkout $branch; git pull origin $branch; python3 directory/directory.py $port"
+ssh  "$user"@cs-1.cs.mcgill.ca \
+     "cd $dirCebolla;
+      git checkout $branch; git pull origin $branch;
+      python3 directory/directory.py $port"
