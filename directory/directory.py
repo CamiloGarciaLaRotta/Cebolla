@@ -17,6 +17,7 @@ from _thread import *       # for threaded client TCP connections
 ###############################################################################
 #   GLOBALS                                                                   #
 ###############################################################################
+
 HOST = None
 PORT = None
 
@@ -33,11 +34,13 @@ directory_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ###############################################################################
 #   MAIN                                                                      #
 ###############################################################################
+
 def main():
     config = parse_config()
     init_params(config)
 
     query_network()
+
     try:
         start_server()
     except (socket.error, KeyboardInterrupt) as e:
@@ -91,6 +94,9 @@ def query_network():
     print('There are {} node(s) in the network'.format(len(NODES)))
 
 
+###############################################################################
+#   THE DIRECTORY NODE SERVER                                                 #
+###############################################################################
 
 # creates worker threads for the TCP server
 def start_server():
@@ -120,50 +126,13 @@ def threaded_client(conn):
 
     conn.close()
 
-# return the string of a JSON encoded object
-# which contains the hostname, keys and CN for a random path
-# in case of invalid input or no available CNs an empty object is returned
+
 def get_path(dst):
-    path = {}
-
-    if dst in NODES:
-        path_nodes = [NODES[i] for i in random.sample(range(len(NODES)),3)]
-
-        for i in range(3):
-            key = 'n{}'.format(str(i))
-            path[key] = {'hostname': path_nodes[i], 'key': get_key(path_nodes[i])}
-
-        try:
-            path['CN'] = pop_CN()
-        except IndexError as e:
-            print(str(e))
-            path = {}
-
-    return json.dumps(path)
-
-# returns the encryption key associated with an input hostname
-def get_key(hostname):
-    # TODO implement encryption key mgmt
-    return "TODO_KEY_MGMT"
-
-# returns a unique CN and removes it from available CNs
-def pop_CN():
-    if CNS:
-        cn = random.choice(CNS)
-        idx = CNS.index(cn)
-
-        return CNS.pop(idx)
-    else:
-        raise IndexError('No more available CNs')
-
-# makes the input CN available for future reuse
-def push_CN(cn):
-    CNS.append(cn)
-
-
+    return random.sample(NODES, 3)
 
 ###############################################################################
 #   RUN MAIN                                                                  #
 ###############################################################################
+
 if __name__ == '__main__':
     main()
