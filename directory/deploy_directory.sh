@@ -3,9 +3,10 @@
 helpstring="
 deploy_directory.sh:
  ( !!! NOTE: must push to github first !!! )
- 1. deploy the onion routing directory node to a mcgill cs machine
+ 1. login to a mcgill cs machine (specifically cs-1.cs.mcgill.ca)
+ 2. cd to Cebolla directory
  2. checkout a git branch of choice and git pull most recent version
- 3. run a the python file to start up the sever to listen on chosen port
+ 3. run directory.py to start up the directory node server
 
 usage: deploy_directory -u <user> -b <branch> -p <port> -x <execpyfile>
  @param user: the username to be used to login to the remote host
