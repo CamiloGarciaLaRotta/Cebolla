@@ -1,6 +1,9 @@
 import base64
 from Crypto.Cipher import AES
 from Crypto import Random
+from Crypto.PublicKey import RSA
+
+RSA_KEY_SIZE = 2048
 
 BS = 16
 
@@ -34,3 +37,18 @@ class AESProdigy(object):
         machine = AES.new(self.key, AES.MODE_CBC, self.iv)
         pm = machine.decrypt(cipher)
         return _trunc(pm).decode('utf-8')
+
+class RSAVirtuoso(object):
+    def __init__(self, key=None):
+        if(key is None): self.key = RSA.generate(RSA_KEY_SIZE)
+        else: self.key = key
+    
+    def get_public_key(self):
+        return self.key.publickey()
+
+    def encrypt(self, msg):
+        return self.key.encrypt(msg, 742072781)
+
+    def decrypt(self, cipher):
+        return self.key.decrypt(cipher)
+#        return self.key.decrypt(cipher).decode('utf-8')
