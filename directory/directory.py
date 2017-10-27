@@ -56,56 +56,48 @@ exit()
 def main():
     global NODES
 
-    NODES = NODES.map(query_node) # find which nodes are activated
+    NODES = NODES.filter(query_node) # keep only activated nodes
     NODES = list( zip(NODES, NODES.map(get_node_pubkey)) ) # and get their pubkeys
 
     # try:
-        # start_server()
+        # run_directory_node()
     # except (socket.error, KeyboardInterrupt) as e:
-        # stop_server()
+        # shut_down_directory_node()
         # sys.exit(str(e))
 
 
 ###############################################################################
-#   INITIALIZE NODES LIST                                                     #
+#   INITIALIZE NODES LIST, GET PUBKEYS                                        #
 ###############################################################################
 
-# fills the NODES lsit with the machines in the LAN that are listening on PORT
-def query_node():
-    print('Querying the network ...')
+# return true if node is activated
+def query_node(ndn): # ndn = node domain name
+    print("entering query_node")
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    timeout = s.connect_ex((node_name,PORT))
+    s.close()
 
-    for node_name in NODES:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        timeout = s.connect_ex((node_name,PORT))
-        s.close()
+    if timeout:
+        return False
+    else
+        return True
 
-        # This functionality was already tested,
-        # commented out to avoid having to setup TCP clients  while testing
-        #        if timeout or hostname in NODES:
-        #            NODES.remove(node_name)
-
-    random.shuffle(NODES)
-
-    print('There are {} node(s) in the network'.format(len(NODES)))
-
+# get node pubkey
+def get_node_pubkey(ndn): # ndn = node domain name
+    return "<TODO: put pubkey here>"
 
 ###############################################################################
 #   THE DIRECTORY NODE SERVER                                                 #
 ###############################################################################
 
-# creates worker threads for the TCP server
-def start_server():
-    directory_socket.bind((HOST,PORT))
-    directory_socket.listen(len(NODES))
-
+def run_directory_node():
     print('Directory Node UP')
-
     while True:
         conn, addr = directory_socket.accept()
         print('Connected to: {}:{}'.format(addr[0], str(addr[1])))
         start_new_thread(threaded_client,(conn,))
 
-def stop_server():
+def shut_down_directory_node():
     directory_socket.close()
     print('Directiry Node DOWN')
 
