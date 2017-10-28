@@ -20,6 +20,8 @@ for i in [1 ... maxNodes]
  3. if branchname arg, checkout and pull branch. else, scp local copy
  4. run onion_router.py to start up the onion_router node server
 endfor
+
+*note that ^Z will go to the next iteration of the loop
 EOF
 
 #      ARGUMENT PARSING
@@ -68,6 +70,8 @@ fi
 #     UPDATE AND RUN DIRECTORY.PY ON THE REMOTE
 ####################################################
 
+trap 'continue' SIGSTP # ^Z goes to next iteration of loop below
+
 for i in $(seq 1 "$maxNodes")
 do
     servername="lab2-$i.cs.mcgill.ca"
@@ -79,7 +83,7 @@ do
     else # use version on github branch
         ssh "$user"@"$servername" \
             "cd $dirCebolla;
-             git checkout $branch; git reset --hard; git pull origin $branch;
+             git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch;
              python3 onion_router/onion_router.py $port";
     fi
 done

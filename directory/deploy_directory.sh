@@ -64,10 +64,10 @@ if [ -z "$branch" ]
 then # use local version
     scp  "directory.py" "$user"@"$servername":"$dirCebolla/directory/directory.py"
     ssh "$user"@"$servername" \
-        "cd $dirCebolla; python3 directory/directory.py 30 $port"
+        "cd $dirCebolla; python3 directory/directory.py 50 $port"
 else # use version on github branch
     ssh "$user"@"$servername" \
         "cd $dirCebolla;
-         git checkout $branch; git reset --hard; git pull origin $branch;
-         python3 directory/directory.py 30 $port";
+         git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch;
+         python3 directory/directory.py 50 $port";
 fi
