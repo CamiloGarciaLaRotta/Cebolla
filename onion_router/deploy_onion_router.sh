@@ -79,11 +79,11 @@ do
     then # use local version
         scp  "onion_router.py" "$user"@"$servername":"$dirCebolla/onion_router/onion_router.py"
         ssh "$user"@"$servername" \
-            "cd $dirCebolla; python3 onion_router/onion_router.py $port"
+            "cd $dirCebolla; python3 onion_router/onion_router.py $port &"
     else # use version on github branch
         ssh "$user"@"$servername" \
             "cd $dirCebolla;
              git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch;
-             python3 onion_router/onion_router.py $port";
+             python3 onion_router/onion_router.py $port &";
     fi
 done

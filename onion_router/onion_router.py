@@ -37,4 +37,3 @@ try:
         conn_socket.close()
 except KeyboardInterrupt:
     SOCKET_LISTEN.close()
-    print("Socket closed")
