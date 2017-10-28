@@ -59,7 +59,7 @@ done
 if  # dont have 6 or 8 args
     [ "$#" -ne "10" ] && [ "$#" -ne "8" ] ||
     # didn't pass args correctly
-    [ -z "$maxNodes" ] || [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ]
+    [ -z "$maxNodes" ] || [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ] ||
     # maxNodes out of range
     [ "$maxNodes" -lt "1" ] || [ "$maxNodes" -gt "30" ]
 then
@@ -70,7 +70,7 @@ fi
 #     UPDATE AND RUN DIRECTORY.PY ON THE REMOTE
 ####################################################
 
-trap 'continue' SIGSTP # ^Z goes to next iteration of loop below
+trap 'continue' SIGTSTP # ^Z goes to next iteration of loop below
 
 for i in $(seq 1 "$maxNodes")
 do

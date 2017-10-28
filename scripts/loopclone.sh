@@ -63,7 +63,7 @@ fi
 #     CLONE CEBOLLA REPO INTO DIRCEBOLLA FOR EACH SERVER
 ##############################################################
 
-trap 'continue' SIGSTP # ^Z goes to next iteration
+trap 'continue' SIGTSTP # ^Z goes to next iteration
 
 for i in $(seq 1 "$maxNodes")
 do

@@ -51,6 +51,7 @@ def main():
 
     NODES = list( filter(ping_node, NODES) ) # keep nodes that respond to ping
     print(NODES)
+    exit()
     NODES = list( zip(NODES, map(get_node_pubkey, NODES)) )   # and get pubkeys
 
     # try:
