@@ -1,12 +1,12 @@
 import argparse             # for command-line argument parsing
-import json                 # for encoding data sent through TCP
-import random               # for shuffling node indices during path selection
+import random               # for random path selection
 import socket               # for TCP communication
-from _thread import *       # for threaded client TCP connections
+import json                 # for encoding data sent through TCP
+import threading            # for one thread per TCP connection
 
 
 
-#   TODO
+#   TODO:
 #    - incorporate encryption key mgmt
 
 
@@ -54,14 +54,12 @@ def main():
 
     NODES = list( filter(ping_node, NODES) ) # keep nodes that respond to ping
     NODES = list( zip(NODES, map(get_node_pubkey, NODES)) )  # and get pubkeys
-    print(NODES)
-    exit()
 
-    # try:
-        # run_directory_node()
-    # except (socket.error, KeyboardInterrupt) as e:
-        # shut_down_directory_node()
-        # sys.exit(str(e))
+    try:
+        run_directory_node()
+    except (socket.error, KeyboardInterrupt) as e:
+        shut_down_directory_node()
+        exit(str(e))
 
 
 
@@ -70,18 +68,20 @@ def main():
 
 # return true if node is activated
 def ping_node(ndn): # ndn = node domain name
-    socket.setdefaulttimeout(0.7) # to ping node faster
+    socket.setdefaulttimeout(0.7) # (seconds) to ping node faster
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     exit_code = s.connect_ex((ndn,PORT))
     s.close()
 
     socket.setdefaulttimeout(None) # restore default
+    msg = "found " + ndn if not exit_code else "DID NOT FIND " + ndn
+    print(msg)
     return not exit_code
 
 # get node pubkey
 def get_node_pubkey(ndn): # ndn = node domain name
-    # TODO fill this in
+    # TODO: fill this in
     return "not a real pubkey"
 
 
@@ -90,30 +90,33 @@ def get_node_pubkey(ndn): # ndn = node domain name
 ###############################################################################
 
 def run_directory_node():
+    global LISTEN_SOCKET
+
     print('Directory Node UP')
     while True:
-        conn, addr = directory_socket.accept()
+        conn, addr = LISTEN_SOCKET.accept()
         print('Connected to: {}:{}'.format(addr[0], str(addr[1])))
-        start_new_thread(threaded_client,(conn,))
+
+        # new thread for each connection
+        t = threading.Thread(target=handle_path_request,args=(conn,))
+        t.start()
 
 def shut_down_directory_node():
     directory_socket.close()
     print('Directiry Node DOWN')
 
-# thread function wich establishes TCP connection with a client
-# recieves a destination node and returns a random path
-# in case of invalid input or no available CNs an empty object is returned
-def threaded_client(conn):
-    data = conn.recv(1024)
 
-    path = get_path(data.decode('utf-8').rstrip())
+def handle_path_request(conn):
+    data = conn.recv(1024).decode('utf-8').rstrip()
 
-    conn.sendall(str.encode(path))
+    # TODO: read path request, decrypt, enrypt with symkey
+    conn.sendall( str.encode(str(get_path())) )
+    conn.sendall( str.encode(" " + data.upper()) )
 
     conn.close()
 
 
-def get_path(dst):
+def get_path():
     return random.sample(NODES, 3)
 
 
