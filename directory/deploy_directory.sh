@@ -61,6 +61,8 @@ if  # dont have 6 or 8 args
     [ "$#" -ne "8" ] && [ "$#" -ne "6" ] ||
     # didn't pass args correctly
     [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ]
+    # port out of range
+    [ "$port" -lt "5551"] || [ "$port" -gt "5557" ] # 7 group members, 7 ports
 then
     echo -e "$helpstring"
     exit 1

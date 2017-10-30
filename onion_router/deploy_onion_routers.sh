@@ -17,7 +17,7 @@ deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port>
  @param  maxNodes     the number of onion router nodes to set up. 1 <= maxNodes <= 50
  @param  dirCebolla   the path to the dirCebolla directory
  @option branch       if given, the github branch version to use, else use local version
- @param  port         the port number for the onion router node to listen on
+ @param  port         the port number for the onion router node to listen on. 5551 <= port <= 5557
 
 What it does:
 for i in [1 ... maxNodes]
@@ -66,12 +66,14 @@ done
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
-if  # dont have 6 or 8 args
+if  # dont have 8 or 10 args
     [ "$#" -ne "10" ] && [ "$#" -ne "8" ] ||
     # didn't pass args correctly
     [ -z "$maxNodes" ] || [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ] ||
     # maxNodes out of range
-    [ "$maxNodes" -lt "1" ] || [ "$maxNodes" -gt "50" ]
+    [ "$maxNodes" -lt "1" ] || [ "$maxNodes" -gt "50" ] ||
+    # port out of range
+    [ "$port" -lt "5551" ] || [ "$port" -gt "5557" ] # 7 group members, 7 ports
 then
     echo -e "$helpstring"
     exit 1
