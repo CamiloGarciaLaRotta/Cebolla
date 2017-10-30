@@ -14,9 +14,9 @@ deploy_directory.sh usage:
 
 deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port>
  @param  user         the username to be used to login to the remote host
- @param  dirCebolla   the path to the dirCebolla directory
+ @param  dirCebolla   the path to the dirCebolla directory on the remote host
  @option branch       if given, the github branch version to use, else use local version
- @param  port         the port number for the directory node to listen on
+ @param  port         the port number for the directory node to listen on. 5551 <= port <= 5557
 
 What it does:
  1. login to a mcgill machine (specifically cs-1.cs.mcgill.ca)
