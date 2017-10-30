@@ -23,7 +23,7 @@ What it does:
 for i in [1 ... maxNodes]
  1. login to a mcgill machine (specifically lab2-i.cs.mcgill.ca)
  2. cd to Cebolla directory
- 3. if branchname arg, checkout and pull branch. else, scp local copy
+ 3. if branchname arg given, checkout and pull branch. else, scp local copy
  4. run onion_router.py on the specified port to start up the onion_router node server
 endfor
 
