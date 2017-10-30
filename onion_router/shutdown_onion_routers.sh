@@ -10,9 +10,9 @@ cd "$THIS_DIR"
 ################################
 
 read -r -d '' helpstring << DOC
-deploy_directory.sh usage:
+shutdown_onion_routers.sh usage:
 
-deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port>
+shutdown_onion_routers.sh -u <user> -d <dirCebolla> [-b <branch>] -p <port>
  @param  user         the username to be used to login to the remote host
  @param  maxNodes     the number of onion router nodes to set up. 1 <= maxNodes <= 50
  @param  port         the port number for the onion router node to listen on
