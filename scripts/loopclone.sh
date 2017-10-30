@@ -23,7 +23,7 @@ for i in [1 ... maxNodes]
  2. git clone Cebolla to dirCebolla
 endfor
 
-Inside the loop, the SIGSTP signal (^Z) goes to next iteration of loop
+Inside the loop, the SIGINT signal (^C) goes to next iteration of loop
 EOF
 
 
@@ -67,7 +67,7 @@ fi
 #     CLONE CEBOLLA REPO INTO DIRCEBOLLA FOR EACH SERVER
 ##############################################################
 
-trap 'continue' SIGTSTP # ^Z goes to next iteration
+trap 'continue' SIGINT # ^C goes to next iteration
 
 for i in $(seq 1 "$maxNodes")
 do

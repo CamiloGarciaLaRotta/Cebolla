@@ -9,7 +9,7 @@ cd "$THIS_DIR"
 #       DOCUMENTATION
 ################################
 
-read -r -d '' helpstring <<'EOF'
+read -r -d '' helpstring << DOC
 deploy_directory.sh usage:
 
 deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port>
@@ -23,7 +23,9 @@ What it does:
  2. cd to Cebolla directory
  3. if branchname arg, checkout and pull branch. else, scp local copy
  4. run directory.py to start up the directory node server
-EOF
+DOC
+
+
 
 #      ARGUMENT PARSING
 ################################
@@ -50,6 +52,8 @@ do
     esac
 done
 
+
+
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
@@ -62,18 +66,25 @@ then
     exit 1
 fi
 
+
+
 #     UPDATE AND RUN DIRECTORY.PY ON THE REMOTE
 ####################################################
 
 servername="cs-1.cs.mcgill.ca"
 if [ -z "$branch" ]
 then # use local version
-    scp  "directory.py" "$user"@"$servername":"$dirCebolla/directory/directory.py"
-    ssh "$user"@"$servername" \
-        "cd $dirCebolla; python3 directory/directory.py 50 $port &"
+    scp "directory.py" "$user"@"$servername":"$dirCebolla/directory/directory.py"
+    ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
+		cd $dirCebolla
+		nohup python3 directory/directory.py 50 $port > /dev/null 2>&1 &
+		exit
+		DOC
 else # use version on github branch
-    ssh "$user"@"$servername" \
-        "cd $dirCebolla;
-         git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch;
-         python3 directory/directory.py 50 $port &";
+    ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
+        cd $dirCebolla
+		git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
+		nohup python3 directory/directory.py 50 $port > /dev/null 2>&1 &
+		exit
+		DOC
 fi

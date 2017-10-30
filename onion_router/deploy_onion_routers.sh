@@ -9,12 +9,12 @@ cd "$THIS_DIR"
 #       DOCUMENTATION
 ################################
 
-read -r -d '' helpstring <<'EOF'
+read -r -d '' helpstring <<DOC
 deploy_directory.sh usage:
 
 deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port>
  @param  user         the username to be used to login to the remote host
- @param  maxNodes     the number of onion router nodes to set up. 1 <= maxNodes <= 30
+ @param  maxNodes     the number of onion router nodes to set up. 1 <= maxNodes <= 50
  @param  dirCebolla   the path to the dirCebolla directory
  @option branch       if given, the github branch version to use, else use local version
  @param  port         the port number for the onion router node to listen on
@@ -27,8 +27,10 @@ for i in [1 ... maxNodes]
  4. run onion_router.py to start up the onion_router node server
 endfor
 
-*note that ^Z will go to the next iteration of the loop
-EOF
+*note that ^C will go to the next iteration of the loop
+DOC
+
+
 
 #      ARGUMENT PARSING
 ################################
@@ -59,6 +61,8 @@ do
     esac
 done
 
+
+
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
@@ -67,29 +71,37 @@ if  # dont have 6 or 8 args
     # didn't pass args correctly
     [ -z "$maxNodes" ] || [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ] ||
     # maxNodes out of range
-    [ "$maxNodes" -lt "1" ] || [ "$maxNodes" -gt "30" ]
+    [ "$maxNodes" -lt "1" ] || [ "$maxNodes" -gt "50" ]
 then
     echo -e "$helpstring"
     exit 1
 fi
 
+
+
 #     UPDATE AND RUN DIRECTORY.PY ON THE REMOTE
 ####################################################
 
-trap 'continue' SIGTSTP # ^Z goes to next iteration of loop below
+trap 'continue' SIGINT # ^C goes to next iteration of loop below
 
 for i in $(seq 1 "$maxNodes")
 do
     servername="lab2-$i.cs.mcgill.ca"
     if [ -z "$branch" ]
     then # use local version
+        echo "sending local onion_router.py to $servername to run on port $port"
         scp  "onion_router.py" "$user"@"$servername":"$dirCebolla/onion_router/onion_router.py"
-        ssh "$user"@"$servername" \
-            "cd $dirCebolla; python3 onion_router/onion_router.py $port &"
+        ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
+			cd $dirCebolla
+			nohup python3 onion_router/onion_router.py $port > /dev/null 2>&1 &
+			exit
+			DOC
     else # use version on github branch
-        ssh "$user"@"$servername" \
-            "cd $dirCebolla;
-             git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch;
-             python3 onion_router/onion_router.py $port &";
+        ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
+			cd $dirCebolla
+			git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
+			nohup python3 onion_router/onion_router.py $port > /dev/null 2>&1 &
+			exit
+			DOC
     fi
 done
