@@ -7,4 +7,7 @@
 *.dvi
 *.fdb_latexmk
 *.fls
-*.pyc
+
+# python-related bs
+__pycache__/
+*.py[cod]

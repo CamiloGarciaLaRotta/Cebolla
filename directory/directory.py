@@ -1,169 +1,128 @@
-import sys                  # for CL argument parsing
-import json                 # for encoding data sent through TCP
-import random               # for shuffling node indices during path selection
+import argparse             # for command-line argument parsing
+import random               # for random path selection
 import socket               # for TCP communication
-import configparser         # for parsing the config file
-from _thread import *       # for threaded client TCP connections
+import json                 # for encoding data sent through TCP
+import threading            # for one thread per TCP connection
 
+
+
+#   TODO:
+#    - incorporate encryption key mgmt
+
+
+
+#   CLI ARGS
 ###############################################################################
-#                                                                             #
-#   TODO                                                                      #
-#    - implement encryption key mgmt                                          #
-#    - implement TLS                                                          #
-#                                                                             #
-###############################################################################
+
+parser = argparse.ArgumentParser() # instantiate cli args parser
+
+# define cli positional args
+parser.add_argument("max_nodes", help="qty of nodes in network", type=int)
+parser.add_argument("port", help="port to listen on", type=int)
+
+args = parser.parse_args() # parse the args
+
+# validate args against conditions
+if args.max_nodes > 50 or args.max_nodes < 1: # no more than 50 nodes
+    parser.error("max_nodes must satisfy: 1 <= max_nodes <= 50")
+if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
+    parser.error("port must satisfy: 5551 <= port <= 5557")
 
 
-###############################################################################
-#   GLOBALS                                                                   #
-###############################################################################
-HOST = None
-PORT = None
 
-MAX_CN = None               # maximum number of concurrent Circuit Numbers
-CNS = []                    # available Circuit Numbers
+#   GLOBALS
+#################################################################################
 
-NODES = []                  # active nodes in onion network
-MAX_NODES = None            # max number of nodes in onion network
-NODE_FORMAT = None          # python format string of nodes' domain names
+HOST = ""                            # empty string => all IPs of this machine
+PORT = args.port                     # port for server to listen on, cli arg
 
-directory_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+MAX_NODES = args.max_nodes           # max number of nodes in onion network
+NODE_FORMAT = "lab2-{}.cs.mcgill.ca" # python formatstring of nodes' domain names
+NODES = [NODE_FORMAT.format(i) for i in range(1, MAX_NODES+1)]
+
+LISTEN_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+LISTEN_SOCKET.bind((HOST, PORT))
+LISTEN_SOCKET.listen(MAX_NODES)
 
 
-###############################################################################
-#   MAIN                                                                      #
-###############################################################################
+
+#   MAIN
+#################################################################################
+
 def main():
-    config = parse_config()
-    init_params(config)
+    global NODES
 
-    query_network()
+    NODES = list( filter(ping_node, NODES) ) # keep nodes that respond to ping
+    NODES = list( zip(NODES, map(get_node_pubkey, NODES)) )  # and get pubkeys
+
     try:
-        start_server()
+        run_directory_node()
     except (socket.error, KeyboardInterrupt) as e:
-        stop_server()
-        sys.exit(str(e))
+        shut_down_directory_node()
+        exit(str(e))
 
 
+
+#   INITIALIZE NODES LIST, GET PUBKEYS
 ###############################################################################
-#   INITIALIZATION HELPERS                                                    #
+
+# return true if node is activated
+def ping_node(ndn): # ndn = node domain name
+    socket.setdefaulttimeout(0.7) # (seconds) to ping node faster
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    exit_code = s.connect_ex((ndn,PORT))
+    s.close()
+
+    socket.setdefaulttimeout(None) # restore default
+    msg = "found " + ndn if not exit_code else "DID NOT FIND " + ndn
+    print(msg)
+    return not exit_code
+
+# get node pubkey
+def get_node_pubkey(ndn): # ndn = node domain name
+    # TODO: fill this in
+    return "not a real pubkey"
+
+
+
+#   THE DIRECTORY NODE SERVER
 ###############################################################################
 
-# parse config file, return dict-like ConfigParser object
-def parse_config():
-    config = configparser.ConfigParser()
-    config.read('network.conf')
-    return config
-
-# init global params from ConfigParser object
-def init_params(config):
-    nconfig = config['NETWORK']
-    global HOST, PORT, MAX_CN, CNS, MAX_NODES, NODE_FORMAT, NODES
-
-    HOST = nconfig['host']
-    PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(nconfig['port'])
-
-    MAX_CN = int(nconfig['max_cn'])
-    CNS.extend(range(MAX_CN))
-    random.shuffle(CNS)
-
-    MAX_NODES = int(nconfig['max_nodes'])
-    NODE_FORMAT = nconfig['node_format']
-    NODES = [NODE_FORMAT.format(i) for i in range(2,MAX_NODES + 1)]
-
-
-# fills the NODES lsit with the machines in the LAN that are listening on PORT
-def query_network():
-    print('Querying the network ...')
-
-    for node_name in NODES:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        timeout = s.connect_ex((node_name,PORT))
-        s.close()
-
-        # This functionality was already tested,
-        # commented out to avoid having to setup TCP clients  while testing
-        #        if timeout or hostname in NODES:
-        #            NODES.remove(node_name)
-
-    random.shuffle(NODES)
-
-    print('There are {} node(s) in the network'.format(len(NODES)))
-
-
-
-# creates worker threads for the TCP server
-def start_server():
-    directory_socket.bind((HOST,PORT))
-    directory_socket.listen(len(NODES))
+def run_directory_node():
+    global LISTEN_SOCKET
 
     print('Directory Node UP')
-
     while True:
-        conn, addr = directory_socket.accept()
+        conn, addr = LISTEN_SOCKET.accept()
         print('Connected to: {}:{}'.format(addr[0], str(addr[1])))
-        start_new_thread(threaded_client,(conn,))
 
-def stop_server():
+        # new thread for each connection
+        t = threading.Thread(target=handle_path_request,args=(conn,))
+        t.start()
+
+def shut_down_directory_node():
     directory_socket.close()
     print('Directiry Node DOWN')
 
-# thread function wich establishes TCP connection with a client
-# recieves a destination node and returns a random path
-# in case of invalid input or no available CNs an empty object is returned
-def threaded_client(conn):
-    data = conn.recv(1024)
 
-    path = get_path(data.decode('utf-8').rstrip())
+def handle_path_request(conn):
+    data = conn.recv(1024).decode('utf-8').rstrip()
 
-    conn.sendall(str.encode(path))
+    # TODO: read path request, decrypt, enrypt with symkey
+    conn.sendall( str.encode(str(get_path())) )
+    conn.sendall( str.encode(" " + data.upper()) )
 
     conn.close()
 
-# return the string of a JSON encoded object
-# which contains the hostname, keys and CN for a random path
-# in case of invalid input or no available CNs an empty object is returned
-def get_path(dst):
-    path = {}
 
-    if dst in NODES:
-        path_nodes = [NODES[i] for i in random.sample(range(len(NODES)),3)]
-
-        for i in range(3):
-            key = 'n{}'.format(str(i))
-            path[key] = {'hostname': path_nodes[i], 'key': get_key(path_nodes[i])}
-
-        try:
-            path['CN'] = pop_CN()
-        except IndexError as e:
-            print(str(e))
-            path = {}
-
-    return json.dumps(path)
-
-# returns the encryption key associated with an input hostname
-def get_key(hostname):
-    # TODO implement encryption key mgmt
-    return "TODO_KEY_MGMT"
-
-# returns a unique CN and removes it from available CNs
-def pop_CN():
-    if CNS:
-        cn = random.choice(CNS)
-        idx = CNS.index(cn)
-
-        return CNS.pop(idx)
-    else:
-        raise IndexError('No more available CNs')
-
-# makes the input CN available for future reuse
-def push_CN(cn):
-    CNS.append(cn)
+def get_path():
+    return random.sample(NODES, 3)
 
 
 
+#   RUN MAIN
 ###############################################################################
-#   RUN MAIN                                                                  #
-###############################################################################
+
 if __name__ == '__main__':
     main()
