@@ -29,15 +29,16 @@ SOCKET_LISTEN = socket(AF_INET, SOCK_STREAM)
 SOCKET_LISTEN.bind((HOST,PORT))
 SOCKET_LISTEN.listen(1)
 
-try:
-    while 1:
-        conn_socket, client_addr = SOCKET_LISTEN.accept()
-        t = threading.Thread(target=reply, args=(conn_socket,))
-        t.start()
-except KeyboardInterrupt:
-    SOCKET_LISTEN.close()
+def main():
+    try:
+        while 1:
+            conn_socket, client_addr = SOCKET_LISTEN.accept()
+            t = threading.Thread(target=reply, args=(conn_socket,))
+            t.start()
+    except KeyboardInterrupt:
+        SOCKET_LISTEN.close()
 
-def reply(conn):
+def reply(conn_socket):
     try:
         while True:
             msg = conn_socket.recv(2048)
@@ -46,3 +47,5 @@ def reply(conn):
     except Exception as e:
         conn_socket.close()
 
+if __name__ == "__main__":
+    main()
