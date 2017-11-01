@@ -1,5 +1,6 @@
 from socket import *
 import argparse
+import threading
 
 
 
@@ -31,9 +32,17 @@ SOCKET_LISTEN.listen(1)
 try:
     while 1:
         conn_socket, client_addr = SOCKET_LISTEN.accept()
-        msg = conn_socket.recv(2048)
-        mod_msg = msg.upper()
-        conn_socket.send(mod_msg)
-        conn_socket.close()
+        t = threading.Thread(target=reply, args=(conn_socket,))
+        t.start()
 except KeyboardInterrupt:
     SOCKET_LISTEN.close()
+
+def reply(conn):
+    try:
+        while True:
+            msg = conn_socket.recv(2048)
+            mod_msg = msg.upper()
+            conn_socket.send(mod_msg)
+    except Exception as e:
+        conn_socket.close()
+

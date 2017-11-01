@@ -1,6 +1,6 @@
-import json
 import threading
-from socket import *
+import json
+import socket
 import argparse
 
 #       CLI ARGS
@@ -24,30 +24,33 @@ if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
 
 PORT = args.port
 HOST = ""
-SOCKET_LISTEN = socket(AF_INET, SOCK_STREAM)
+SOCKET_LISTEN = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SOCKET_LISTEN.bind((HOST,PORT))
 SOCKET_LISTEN.listen(1)
 
-try:
-    while 1:
-        conn_socket, client_addr = SOCKET_LISTEN.accept()
-        print('Connected to: {}:{}'.format(client_addr[0], str(client_addr[1])))
+def main():
+    try:
+        while 1:
+            conn_socket, client_addr = SOCKET_LISTEN.accept()
+            print('Connected to: {}:{}'.format(client_addr[0], str(client_addr[1])))
 
-        # new thread for backward data passing
-        t = theading.Thread(target=two_way_setup, args=(conn_socket,))
-        t.start()
+            # new thread for backward data passing
+            t = threading.Thread(target=two_way_setup, args=(conn_socket,))
+            t.start()
 
-except KeyboardInterrupt:
-    SOCKET_LISTEN.close()
+    except (socket.error, KeyboardInterrupt):
+        SOCKET_LISTEN.close()
 
 def two_way_setup(back_conn):
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
 
     # (TODO:decrypt data, initialize symkey, send ACK)
+    back_conn.send("ACK".encode('utf-8'))
 
     # Wait for first-ever data onion
-    print('[Onion] Waiting for data onion')
+    print('[Onion] Waiting for data onion...')
     msg = back_conn.recv(2048).decode('utf-8')
+    print('[Onion] Got data onion.')
     # (TODO:decrypt)
     msg_dict = json.loads(msg)
     msg_data = msg_dict["data"]
@@ -57,11 +60,11 @@ def two_way_setup(back_conn):
     print('[Onion] Connecting to next onion node...')
     forw_conn.connect((msg_addr, PORT))
     print('[Onion] Connected.')
-    forw_conn.send(msg_data)
+    forw_conn.send(msg_data.encode('utf-8'))
         	
     t = threading.Thread(target=backward_transfer, args=(forw_conn, back_conn))
     t.start()
-    forward_transfer(forw_conn, back_conn)
+    forward_transfer(back_conn, forw_conn)
 
 def backward_transfer(forw_conn, back_conn):
     while True:
@@ -71,7 +74,7 @@ def backward_transfer(forw_conn, back_conn):
         # 'msg = decrypt(msg)'
 
         # send it on down the line!
-        back_conn.send(msg)
+        back_conn.send(msg.encode('utf-8'))
 
 def forward_transfer(back_conn, forw_conn):
     while True:
@@ -85,4 +88,7 @@ def forward_transfer(back_conn, forw_conn):
         msg_addr = msg_dict["addr"]
 
         # send it on down the line!
-        forw_conn.send(msg_data)
+        forw_conn.send(msg_data.encode('utf-8'))
+
+if __name__ == "__main__":
+    main()
