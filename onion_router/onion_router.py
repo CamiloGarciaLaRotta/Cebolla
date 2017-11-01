@@ -45,7 +45,8 @@ def two_way_setup(back_conn):
 
     # (TODO:decrypt data, initialize symkey, send ACK)
 
-    # Wait for data onion
+    # Wait for first-ever data onion
+    print('[Onion] Waiting for data onion')
     msg = back_conn.recv(2048).decode('utf-8')
     # (TODO:decrypt)
     msg_dict = json.loads(msg)
@@ -53,7 +54,9 @@ def two_way_setup(back_conn):
     msg_addr = msg_dict["addr"]
 
     forw_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print('[Onion] Connecting to next onion node...')
     forw_conn.connect((msg_addr, PORT))
+    print('[Onion] Connected.')
     forw_conn.send(msg_data)
         	
     t = threading.Thread(target=backward_transfer, args=(forw_conn, back_conn))
@@ -83,9 +86,3 @@ def forward_transfer(back_conn, forw_conn):
 
         # send it on down the line!
         forw_conn.send(msg_data)
-
-#<socket.socket fd=3, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('132.206.52.24', 36818), raddr=('132.206.52.27', 22)>
-
-    # continue doing your shit
-    # while (True):
-    #   pass
