@@ -12,16 +12,16 @@ cd "$THIS_DIR"
 read -r -d '' helpstring <<DOC
 deploy_onion_routers.sh usage:
 
-deploy_onion_routers.sh -u <user> -d <dirCebolla> [-b <branch>] -p <port>
- @param  user         the username to be used to login to the remote host
+deploy_onion_routers.sh -m maxNodes -u <user> -d <dirCebolla> [-b <branch>] -p <port>
  @param  maxNodes     the number of onion router nodes to set up. 1 <= maxNodes <= 50
+ @param  user         the username to be used to login to the remote host
  @param  dirCebolla   the path to the dirCebolla directory on the remote host
  @option branch       if given, the github branch version to use, else use local version
  @param  port         the port number for the onion router node to listen on. 5551 <= port <= 5557
 
 What it does:
 for i in [1 ... maxNodes]
- 1. login to a mcgill machine (specifically lab2-i.cs.mcgill.ca)
+ 1. login to lab2-i.cs.mcgill.ca
  2. cd to Cebolla directory
  3. if branchname arg given, checkout and pull branch. else, scp local copy
  4. run onion_router.py on the specified port to start up the onion_router node server
@@ -81,7 +81,7 @@ fi
 
 
 
-#     UPDATE AND RUN DIRECTORY.PY ON THE REMOTE
+#     UPDATE AND RUN onion_router.py ON THE REMOTE
 ####################################################
 
 trap 'continue' SIGINT # ^C goes to next iteration of loop below
