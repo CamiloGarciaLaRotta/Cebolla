@@ -76,7 +76,7 @@ def ping_node(ndn): # ndn = node domain name
 
     socket.setdefaulttimeout(None) # restore default
     msg = "found " + ndn if not exit_code else "DID NOT FIND " + ndn
-    print(msg)
+
     return not exit_code
 
 # get node pubkey
