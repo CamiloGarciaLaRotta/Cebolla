@@ -32,7 +32,7 @@ DOC
 ################################
 
 user=""       # username on remote host
-dirCebolla="" # the path to the root of the Cebolla directory
+dirCebolla="" # the path to the root of the Cebolla directory on remote host
 branch=       # the git branch to checkout on remote host
 port=""       # the port to configure the server to listen on
 while getopts "u:d:b:p:" opt
@@ -59,7 +59,7 @@ done
 ################################
 
 if  # dont have 8 or 10 args
-    [ "$#" -ne "8" ] || [ "$#" -ne "6" ] ||
+    [ "$#" -ne "8" ] && [ "$#" -ne "6" ] ||
     # didn't pass args correctly
     [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ] ||
     # port out of range
@@ -73,8 +73,6 @@ fi
 
 #     UPDATE AND RUN dummy_dest.py ON THE REMOTE
 ####################################################
-
-trap 'continue' SIGINT # ^C goes to next iteration of loop below
 
 servername="cs-2.cs.mcgill.ca"
 if [ -z "$branch" ]

@@ -78,7 +78,7 @@ def two_way_setup(back_conn):
     print('[Onion] Connecting to next onion node...')
     forw_conn.connect((msg_addr, PORT))
     print('[Onion] Connected.')
-    forw_conn.send(msg_data.encode('utf-8'))
+    forw_conn.send(json.dumps(msg_data).encode('utf-8'))
 
     # now that two way communication is established, pass data back and forth forever
 
@@ -103,7 +103,7 @@ def forward_transfer(back_conn, forw_conn):
         msg_addr = msg_dict["addr"]
 
         # pass it on
-        forw_conn.send(msg_data.encode('utf-8'))
+        forw_conn.send(json.dumps(msg_data).encode('utf-8'))
 
 def backward_transfer(forw_conn, back_conn):
     while True:
