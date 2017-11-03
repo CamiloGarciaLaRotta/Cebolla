@@ -9,20 +9,21 @@ cd "$THIS_DIR"
 #       DOCUMENTATION
 ################################
 
-read -r -d '' helpstring << DOC
-deploy_directory.sh usage:
+read -r -d '' helpstring <<DOC
+deploy_dummy_dest.sh usage:
 
-deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port>
+deploy_dummy_dest.sh -u <user> -d <dirCebolla> [-b <branch>] -p <port>
  @param  user         the username to be used to login to the remote host
  @param  dirCebolla   the path to the dirCebolla directory on the remote host
  @option branch       if given, the github branch version to use, else use local version
- @param  port         the port number for the directory node to listen on. 5551 <= port <= 5557
+ @param  port         the port number for the onion router node to listen on. 5551 <= port <= 5557
 
 What it does:
- 1. login to cs-1.cs.mcgill.ca
+ 1. login to cs-2.cs.mcgill.ca
  2. cd to Cebolla directory
  3. if branchname arg given, checkout and pull branch. else, scp local copy
- 4. run directory.py on the specified port to start up the directory node server
+ 4. run dummy_dest.py on the specified port to start up dummy_dest server
+endfor
 DOC
 
 
@@ -31,7 +32,7 @@ DOC
 ################################
 
 user=""       # username on remote host
-dirCebolla="" # the path to the root of the Cebolla directory
+dirCebolla="" # the path to the root of the Cebolla directory on remote host
 branch=       # the git branch to checkout on remote host
 port=""       # the port to configure the server to listen on
 while getopts "u:d:b:p:" opt
@@ -57,7 +58,7 @@ done
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
-if  # dont have 6 or 8 args
+if  # dont have 8 or 10 args
     [ "$#" -ne "8" ] && [ "$#" -ne "6" ] ||
     # didn't pass args correctly
     [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ] ||
@@ -70,23 +71,24 @@ fi
 
 
 
-#     UPDATE AND RUN DIRECTORY.PY ON THE REMOTE
+#     UPDATE AND RUN dummy_dest.py ON THE REMOTE
 ####################################################
 
-servername="cs-1.cs.mcgill.ca"
+servername="cs-2.cs.mcgill.ca"
 if [ -z "$branch" ]
 then # use local version
-    scp "directory.py" "$user"@"$servername":"$dirCebolla/directory/directory.py"
+    echo "sending local dummy_dest.py to $servername to run on port $port"
+    scp  "dummy_dest.py" "$user"@"$servername":"$dirCebolla/dummy_dest/dummy_dest.py"
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
 		cd $dirCebolla
-		nohup python3 directory/directory.py 50 $port > /dev/null 2>&1 &
+		nohup python3 dummy_dest/dummy_dest.py $port > /dev/null 2>&1 &
 		exit
 		DOC
 else # use version on github branch
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
-        cd $dirCebolla
+		cd $dirCebolla
 		git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
-		nohup python3 directory/directory.py 50 $port > /dev/null 2>&1 &
+		nohup python3 dummy_dest/dummy_dest.py $port > /dev/null 2>&1 &
 		exit
 		DOC
 fi

@@ -12,14 +12,14 @@ cd "$THIS_DIR"
 read -r -d '' helpstring << DOC
 shutdown_onion_routers.sh usage:
 
-shutdown_onion_routers.sh -u <user> -d <dirCebolla> [-b <branch>] -p <port>
+shutdown_onion_routers.sh -m maxNodes -u <user> -p <port>
  @param  user         the username to be used to login to the remote host
  @param  maxNodes     the number of onion router nodes to set up. 1 <= maxNodes <= 50
  @param  port         the port number for the onion router node to listen on
 
 What it does:
 for i in [1 ... maxNodes]
- 1. login to a mcgill machine (specifically lab2-i.cs.mcgill.ca)
+ 1. login to lab2-i.cs.mcgill.ca
  2. find and kill the running onion_router.py on the specified port
 endfor
 
@@ -67,7 +67,7 @@ fi
 
 
 
-#     UPDATE AND RUN DIRECTORY.PY ON THE REMOTE
+#     KILL RUNNING onion_router.py ON THE REMOTE
 ####################################################
 
 trap 'continue' SIGINT # ^C goes to next iteration of loop below
