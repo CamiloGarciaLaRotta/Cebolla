@@ -64,9 +64,9 @@ class Originator(object):
         msg = {}
         sym = self.path[depth-1][1]
         enc_sym = self.pubkeys[depth-1].encrypt(sym)
-        msg["symkey"] = base64.encodestring(enc_sym[0]).decode('utf-8')
-        if(depth == 1): msg["prevKey"] = base64.encodestring(self.pubkeys[depth-1].encrypt(self.key)[0]).decode('utf-8')
-        else: msg["prevKey"] = base64.encodestring(self.pubkeys[depth-1].encrypt(self.path[depth-2][1])[0]).decode('utf-8')
+        msg["symkey"] = base64.encodebytes(enc_sym[0]).decode('utf-8')
+        if(depth == 1): msg["prevKey"] = base64.encodebytes(self.pubkeys[depth-1].encrypt(self.key)[0]).decode('utf-8')
+        else: msg["prevKey"] = base64.encodebytes(self.pubkeys[depth-1].encrypt(self.path[depth-2][1])[0]).decode('utf-8')
         return json.dumps(msg)
 
     def set_pubkeys(self, keys):
