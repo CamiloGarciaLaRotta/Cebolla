@@ -42,10 +42,6 @@ class Originator(object):
 
     # Creates the full encryption-layered message
     def create_onion(self, mtype, depth, msg, dst, dstPort=80):
-#        msg = { #Greasy switch implementation with dictionary
-#            MessageType.Data: JSONMessage("Data", dst, msg), 
-#            MessageType.Establish: JSONMessage("Establish", dst, self.create_symkey_msg(depth))
-#            }[mtype]
         if mtype == MessageType.Data: msg = JSONMessage("Data", dst, msg, dstPort)
         elif mtype == MessageType.Establish: msg = JSONMessage("Establish", dst, self.create_symkey_msg(depth), dstPort)
         for i in range(depth-1,0,-1): # Cycles list in reverse order
@@ -66,7 +62,6 @@ class Originator(object):
 
     def create_symkey_msg(self, depth):
         msg = {}
-        print('DEBUG: ' + repr(self.path[depth-1][1]))
         sym = self.path[depth-1][1]
         enc_sym = self.pubkeys[depth-1].encrypt(sym)
         msg["symkey"] = base64.encodestring(enc_sym[0]).decode('utf-8')
