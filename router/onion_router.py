@@ -59,7 +59,7 @@ def two_way_setup(back_conn):
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
 
     # (TODO:decrypt data, initialize+respond with symkey. for now send 'ACK')
-    back_conn.send("ACK".encode('utf-8'))
+    back_conn.sendall("ACK".encode('utf-8'))
 
     # Wait for first-ever onion from back_conn
     print('[Onion] Waiting for data onion...')
@@ -79,7 +79,7 @@ def two_way_setup(back_conn):
     print('[Onion] Connecting to next onion node...')
     forw_conn.connect((msg_addr, PORT))
     print('[Onion] Connected.')
-    forw_conn.send(json.dumps(msg_data).encode('utf-8'))
+    forw_conn.sendall(json.dumps(msg_data).encode('utf-8'))
 
     # now that two way communication is established, pass data back and forth forever
 
@@ -99,7 +99,7 @@ def forward_transfer(back_conn, forw_conn):
         # (TODO: decrypt)
 
         # pass it on
-        forw_conn.send(msg.encode('utf-8'))
+        forw_conn.sendall(msg.encode('utf-8'))
 
 def backward_transfer(forw_conn, back_conn):
     while True:
@@ -109,7 +109,7 @@ def backward_transfer(forw_conn, back_conn):
         # (TODO: encrypt)
 
         # pass it on
-        back_conn.send(msg.encode('utf-8'))
+        back_conn.sendall(msg.encode('utf-8'))
 
 
 
