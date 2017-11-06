@@ -97,13 +97,8 @@ def forward_transfer(back_conn, forw_conn):
 
         # (TODO: decrypt)
 
-        # json parse
-        msg_dict = json.loads(msg)
-        msg_data = msg_dict["data"]
-        msg_addr = msg_dict["addr"]
-
         # pass it on
-        forw_conn.send(json.dumps(msg_data).encode('utf-8'))
+        forw_conn.send(msg.encode('utf-8'))
 
 def backward_transfer(forw_conn, back_conn):
     while True:
