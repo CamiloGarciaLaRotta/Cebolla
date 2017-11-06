@@ -62,24 +62,26 @@ def two_way_setup(back_conn):
     back_conn.sendall("ACK".encode('utf-8'))
 
     # Wait for first-ever onion from back_conn
-    print('[Onion] Waiting for data onion...')
+    print('[Onion] Waiting for setup onion...')
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
-    print('[Onion] Got data onion.')
+    print('[Onion] Got setup onion.')
 
     # (TODO:decrypt)
 
     # parse onion to find out who to send to and what to send
     print('First data onion: {}'.format(msg))
     msg_dict = json.loads(msg)
-    msg_data = msg_dict["data"]
     msg_addr = msg_dict["addr"]
+    msg_next = msg_dict["next"] 
 
     # connect to forw_conn and pass along data from back_conn
     forw_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print('[Onion] Connecting to next onion node...')
     forw_conn.connect((msg_addr, PORT))
     print('[Onion] Connected.')
-    forw_conn.sendall(json.dumps(msg_data).encode('utf-8'))
+    
+    print('Sending: {} \nTo: {}'.format(msg_next, msg_addr))
+    forw_conn.sendall(msg_next.encode('utf-8'))
 
     # now that two way communication is established, pass data back and forth forever
 
@@ -95,6 +97,8 @@ def two_way_setup(back_conn):
 def forward_transfer(back_conn, forw_conn):
     while True:
         msg = back_conn.recv(2048).decode('utf-8').rstrip()
+        
+        print('From back_conn: {}'.format(msg))
 
         # (TODO: decrypt)
 

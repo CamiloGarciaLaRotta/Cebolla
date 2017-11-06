@@ -42,13 +42,12 @@ def reply(conn_socket):
     try:
         while True:
             msg = conn_socket.recv(2048).decode('utf-8')
-            print(msg)
-            #if msg == 'dummy data': 
-            #    print('true')
-            #    conn_socket.send(b'ACK')
-            #else: 
-            mod_msg = msg.upper().encode('utf-8')
-            conn_socket.send(mod_msg)
+            print('Recieved: {}'.format(msg))
+            if msg == 'SYN': 
+                conn_socket.send(b'ACK')
+            else: 
+                mod_msg = msg.upper().encode('utf-8')
+                conn_socket.send(mod_msg)
     except Exception as e:
         conn_socket.close()
 

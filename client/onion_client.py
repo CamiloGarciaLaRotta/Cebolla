@@ -35,8 +35,8 @@ LISTEN_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 LISTEN_SOCKET.bind((HOST, PORT))
 LISTEN_SOCKET.listen(1)
 
-build_onion = lambda n2: lambda n3: lambda dst, data: {'addr': n2, 'data': 
-        {'addr': n3, 'data': {'addr': dst, 'data': data}}}
+encapsulate = lambda addr, key, next_node: {'addr': addr, 'key': key,
+                                            'next': next_node} 
 
 
 #   MAIN
@@ -73,13 +73,10 @@ def run_client_node():
 
     while True:
         msg = input('Enter Message > ')
-        data_onion = build_onion( path[1]['addr'])(path[2]['addr'])(args.destination, msg)
-        
-        if args.verbose: print('data_onion: {}'.format(data_onion))
             
         # TODO encrypt
 
-        s.sendall(json.dumps(data_onion).encode('utf-8'))
+        s.sendall(msg.encode('utf-8'))
 
 
 def shut_down_directory_node():
@@ -91,7 +88,7 @@ def get_path():
     dir_sock.connect((DIRECTORY_NODE,PORT))
 
     # TODO define what to send because directory doesn't even care
-    dir_sock.sendall(b'dunno what to put here yet')
+    dir_sock.sendall(b'TODO')
 
     data = dir_sock.recv(1024).decode('utf-8').rstrip()
 
@@ -103,25 +100,36 @@ def get_path():
     return path
 
 def setup_vc(path, conn):
-    setup_onion = build_onion(
-            path[1]['addr'])(path[2]['addr'])(args.destination, 'dummy data')
-    data = json.dumps(setup_onion).encode('utf-8')
 
-    if args.verbose: print('setup_onion: {}'.format(setup_onion))
+    # TODO elegantly refactor the following in a loop
 
     # TODO encrypt data
+    
+    # get ACK from N1
+    conn.sendall(b'SYN')
+    response = conn.recv(1024).decode('utf-8').rstrip()
+    if args.verbose: print('ACK recieved')
 
-    # the setup onion sent twice will establish the VC
-    # along the 3 internal nodes
-    for _ in range(3):
-        conn.sendall(data)
-        response = conn.recv(1024).decode('utf-8').rstrip()
+    # send setup onion for N2 to N1
+    setup_1_2 = encapsulate(path[1]['addr'], path[1]['key'], 'SYN')
+    if args.verbose: print('first_onion: {}'.format(setup_1_2))
+    conn.sendall(json.dumps(setup_1_2).encode('utf-8'))
+    response = conn.recv(1024).decode('utf-8').rstrip()
+    if args.verbose: print('ACK recieved')
 
-        # TODO add timeout or some handling mechanism in case node is not
-        # respondant
-        if response != 'ACK': return False
+    # send setup onion for N3 to N2
+    setup_2_3 = encapsulate(path[2]['addr'], path[2]['key'], 'SYN')
+    if args.verbose: print('second_onion: {}'.format(setup_2_3))
+    conn.sendall(json.dumps(setup_2_3).encode('utf-8'))
+    response = conn.recv(1024).decode('utf-8').rstrip()
+    if args.verbose: print('ACK recieved')
         
-        if args.verbose: print('ACK recieved')
+    # send setup onion for dst to N3
+    setup_3_dst = encapsulate(args.destination, 'DST_KEY', 'SYN')
+    if args.verbose: print('second_onion: {}'.format(setup_3_dst))
+    conn.sendall(json.dumps(setup_3_dst).encode('utf-8'))
+    #response = conn.recv(1024).decode('utf-8').rstrip()
+    #if args.verbose: print('ACK recieved')
 
     return True
 
@@ -132,8 +140,7 @@ def handle_response(conn):
 
         # TODO decrypt
 
-        print('')
-        print('Reply from {}: {}'.format('ADD SRC',msg))
+        print('\nReply from {}: {}'.format('ADD SRC',msg))
 
 #   RUN MAIN
 ###############################################################################
