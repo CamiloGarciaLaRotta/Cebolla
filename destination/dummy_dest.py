@@ -1,4 +1,4 @@
-from socket import *
+import socket
 import argparse
 import threading
 
@@ -11,12 +11,15 @@ parser = argparse.ArgumentParser() # instantiate cli args parser
 
 # define cli positional args
 parser.add_argument("port", help="port to listen on", type=int)
+parser.add_argument("-v", "--verbose",
+                            help="level of logging verbose", action="store_true")
 
 args = parser.parse_args() # parse the args
 
 # validate args against conditions
 if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
     parser.error("port must satisfy: 5551 <= port <= 5557")
+if args.verbose: print('Verbosity ON\n')
 
 
 
@@ -25,7 +28,7 @@ if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
 
 PORT = args.port
 HOST = ""
-SOCKET_LISTEN = socket(AF_INET, SOCK_STREAM)
+SOCKET_LISTEN = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SOCKET_LISTEN.bind((HOST,PORT))
 SOCKET_LISTEN.listen(1)
 
