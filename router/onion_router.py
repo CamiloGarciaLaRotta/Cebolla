@@ -30,6 +30,7 @@ HOST = ""
 LISTENER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 LISTENER_SOCKET.bind((HOST,PORT))
 LISTENER_SOCKET.listen(50)
+DEFAULT_NEXT_PORT = 80
 
 
 
@@ -78,15 +79,17 @@ def two_way_setup(back_conn):
     msg_addr = msg_dict["addr"]
     msg_next = msg_dict["next"] 
 
+    port = int(msg_dict["port"]) if "port" in msg_dict else DEFAULT_NEXT_PORT
+
     # connect to forw_conn and pass along data from back_conn
     forw_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if args.verbose: print('[Status] Connecting to next onion node...')
-    forw_conn.connect((msg_addr, PORT))
+    forw_conn.connect((msg_addr, port))
     if args.verbose: print('[Status] Connected.')
     
     if args.verbose: print('[Status] Sending: {} To: {}'.format(msg_next, msg_addr))
     forw_conn.sendall(msg_next.encode('utf-8'))
-
+    
     # now that two way communication is established, pass data back and forth forever
 
     t = threading.Thread(target=backward_transfer, args=(forw_conn,

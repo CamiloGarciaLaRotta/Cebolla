@@ -41,13 +41,9 @@ class Originator(object):
         return self.path
 
     # Creates the full encryption-layered message
-    def create_onion(self, mtype, depth, msg=None, dst=None):
-#        msg = { #Greasy switch implementation with dictionary
-#            MessageType.Data: JSONMessage("Data", dst, msg), 
-#            MessageType.Establish: JSONMessage("Establish", dst, self.create_symkey_msg(depth))
-#            }[mtype]
-        if mtype == MessageType.Data: msg = JSONMessage("Data", dst, msg)
-        elif mtype == MessageType.Establish: msg = JSONMessage("Establish", dst, self.create_symkey_msg(depth))
+    def create_onion(self, mtype, depth, msg, dst, dstPort=80):
+        if mtype == MessageType.Data: msg = JSONMessage("Data", dst, msg, dstPort)
+        elif mtype == MessageType.Establish: msg = JSONMessage("Establish", dst, self.create_symkey_msg(depth), dstPort)
         for i in range(depth-1,0,-1): # Cycles list in reverse order
             msg = self.add_layer(msg.to_string(), i, False)
         if(mtype == MessageType.Data): msg = self.add_layer(msg.to_string(), 0, True)
@@ -66,15 +62,11 @@ class Originator(object):
 
     def create_symkey_msg(self, depth):
         msg = {}
-#        msg["symkey"] = str(self.pubkeys[depth-1].encrypt(self.path[depth-1][1]))
-#        print('Encrypted symkey, length ' + str(len(msg["symkey"])) + ': ' + msg["symkey"])
-#        if(depth == 1): msg["prevKey"] = str(self.pubkeys[depth-1].encrypt(self.key))
-#        else: msg["prevKey"] = str(self.pubkeys[depth-1].encrypt(self.path[depth-2][1]))
-        msg["symkey"] = base64.b64encode(self.pubkeys[depth-1].encrypt(self.path[depth-1][1])[0])
-#        print('Encrypted symkey, length ' + str(len(msg["symkey"])) + ': ' + msg["symkey"])
-        if(depth == 1): msg["prevKey"] = base64.b64encode(self.pubkeys[depth-1].encrypt(self.key)[0])
-        else: msg["prevKey"] = base64.b64encode(self.pubkeys[depth-1].encrypt(self.path[depth-2][1])[0])
-#        print('created cipher: ' + cipher)
+        sym = self.path[depth-1][1]
+        enc_sym = self.pubkeys[depth-1].encrypt(sym)
+        msg["symkey"] = base64.encodebytes(enc_sym[0]).decode('utf-8')
+        if(depth == 1): msg["prevKey"] = base64.encodebytes(self.pubkeys[depth-1].encrypt(self.key)[0]).decode('utf-8')
+        else: msg["prevKey"] = base64.encodebytes(self.pubkeys[depth-1].encrypt(self.path[depth-2][1])[0]).decode('utf-8')
         return json.dumps(msg)
 
     def set_pubkeys(self, keys):

@@ -11,14 +11,18 @@ import threading            # for one thread per TCP connection
 parser = argparse.ArgumentParser()
 
 parser.add_argument("destination", help="hostname to connect to")
-parser.add_argument("port", help="port to listen on", type=int)
+parser.add_argument("onion_port", 
+                    help="port to communicate with onion network", type=int)
+parser.add_argument("-d", "--destination_port", 
+                    help="port in which destination will be listening. If not \
+                    specified, port 80 is implied", type=int)
 parser.add_argument("-v", "--verbose",
                     help="level of logging verbose", action="store_true")
 
 args = parser.parse_args()
 
 # validate args against conditions
-if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
+if args.onion_port < 5551 or args.onion_port > 5557: # 7 group members, each get a port
     parser.error("port must satisfy: 5551 <= port <= 5557")
 
 
@@ -26,14 +30,10 @@ if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
 #################################################################################
 
 HOST = ''                            # empty string => all IPs of this machine
-PORT = args.port                     # port for server to send data onto, cli arg
+PORT = args.onion_port               # port for server to send data onto, cli arg
 SENDER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 DIRECTORY_NODE = 'cs-1'              # TODO hardcoded value or CL argument
-
-
-encapsulate = lambda addr, key, next_node: {'addr': addr, 'key': key,
-                                            'next': next_node} 
 
 
 #   MAIN
@@ -69,7 +69,10 @@ def run_client_node():
 
     # send first data onion 
     msg = input('Enter Message > ')
-    first_onion = encapsulate(path[3]['addr'], path[3]['key'], msg)
+
+    first_onion = encapsulate(path[3]['addr'], path[3]['key'], 
+                                msg, args.destination_port)
+
     if args.verbose: print('[Data] First_onion: {}'.format(first_onion))
     
     # TODO encrypt data
@@ -85,8 +88,10 @@ def run_client_node():
 
         SENDER_SOCKET.sendall(msg.encode('utf-8'))
 
+
 def shut_down_client_node():
     SENDER_SOCKET.close()
+
 
 def get_path():
     dir_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -103,6 +108,7 @@ def get_path():
 
     return path
 
+
 def setup_vc(path, conn):
     # get ACK from first node
     conn.sendall(b'SYN')
@@ -112,7 +118,8 @@ def setup_vc(path, conn):
 
     # get ACK for remaining internal nodes
     for i in range(1,3):
-        setup_onion = encapsulate(path[i]['addr'], path[i]['key'], 'SYN')
+        setup_onion = encapsulate(path[i]['addr'], path[i]['key'], 
+                                'SYN', args.onion_port)
         if args.verbose: print('[Status] setup_onion: {}'.format(setup_onion))
         
         # TODO encrypt data
@@ -123,6 +130,13 @@ def setup_vc(path, conn):
         if args.verbose: print('[Status] ACK recieved')
     
     return True
+
+
+def encapsulate(addr, key, next_node, port=None):
+    onion = {'addr': addr, 'key': key, 'next': next_node} 
+    if port: onion['port'] = port
+
+    return onion
 
 
 def handle_response(conn):
