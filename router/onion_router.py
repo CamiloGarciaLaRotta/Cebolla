@@ -20,7 +20,6 @@ args = parser.parse_args() # parse the args
 # validate args against conditions
 if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
     parser.error("port must satisfy: 5551 <= port <= 5557")
-if args.verbose: print('Verbosity ON\n')
 
 
 #       GLOBALS
