@@ -5,11 +5,10 @@ import json                 # for encoding data sent through TCP
 import threading            # for one thread per TCP connection
 
 
-
 #   TODO:
 #    - incorporate encryption key mgmt
-
-
+#    - directory ping of nodes causes routers to fail, must start directory
+#      before router
 
 #   CLI ARGS
 ###############################################################################
@@ -19,6 +18,8 @@ parser = argparse.ArgumentParser() # instantiate cli args parser
 # define cli positional args
 parser.add_argument("max_nodes", help="qty of nodes in network", type=int)
 parser.add_argument("port", help="port to listen on", type=int)
+parser.add_argument("-v", "--verbose",
+                    help="level of logging verbose", action="store_true")
 
 args = parser.parse_args() # parse the args
 
@@ -52,13 +53,16 @@ LISTEN_SOCKET.listen(MAX_NODES)
 def main():
     global NODES
 
+    if args.verbose: print('[Status] Querying network nodes...')
     NODES = list( filter(ping_node, NODES) ) # keep nodes that respond to ping
     NODES = list( zip(NODES, map(get_node_pubkey, NODES)) )  # and get pubkeys
 
+    if args.verbose: print('[Status] Directory UP')
     try:
         run_directory_node()
     except (socket.error, KeyboardInterrupt) as e:
         shut_down_directory_node()
+        if args.verbose: print('[Error] Directory DOWN')
         exit(str(e))
 
 
@@ -92,32 +96,36 @@ def get_node_pubkey(ndn): # ndn = node domain name
 def run_directory_node():
     global LISTEN_SOCKET
 
-    print('Directory Node UP')
     while True:
         conn, addr = LISTEN_SOCKET.accept()
-        print('Connected to: {}:{}'.format(addr[0], str(addr[1])))
+        print('[Status] Connected to: {}:{}'.format(addr[0], str(addr[1])))
 
         # new thread for each connection
-        t = threading.Thread(target=handle_path_request,args=(conn,))
+        t = threading.Thread(target=handle_path_request, args=(conn,), daemon=True)
         t.start()
 
 def shut_down_directory_node():
-    directory_socket.close()
-    print('Directiry Node DOWN')
+    LISTEN_SOCKET.close()
 
 
 def handle_path_request(conn):
     data = conn.recv(1024).decode('utf-8').rstrip()
+    if args.verbose: print('[Status] Recieved path request from {}'.format(data)) 
 
     # TODO: read path request, decrypt, enrypt with symkey
-    conn.sendall( str.encode(str(get_path())) )
-    conn.sendall( str.encode(" " + data.upper()) )
+    conn.sendall( json.dumps(get_path()).encode('utf-8') )
 
     conn.close()
 
 
 def get_path():
-    return random.sample(NODES, 3)
+    # TODO implement actual retrieval of data
+    path =  [{'addr':'lab2-1','key':'KEY_1'},
+            {'addr':'lab2-2','key':'KEY_2'},
+            {'addr':'lab2-3','key':'KEY_3'}]
+    if args.verbose: print('[Status] Selected path: {}'.format(path))
+    
+    return path
 
 
 

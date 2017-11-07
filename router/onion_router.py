@@ -12,13 +12,14 @@ parser = argparse.ArgumentParser() # instantiate cli args parser
 
 # define cli positional args
 parser.add_argument("port", help="port to listen on", type=int)
+parser.add_argument("-v", "--verbose",
+                    help="level of logging verbose", action="store_true")
 
 args = parser.parse_args() # parse the args
 
 # validate args against conditions
 if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
     parser.error("port must satisfy: 5551 <= port <= 5557")
-
 
 
 #       GLOBALS
@@ -37,17 +38,20 @@ DEFAULT_NEXT_PORT = 80
 ########################################################
 
 def main():
+    if args.verbose: print('[Status] Router Node UP')
     try:
         while 1:
             # accept connection from previous ('backward') node in path
             back_conn, client_addr = LISTENER_SOCKET.accept()
-            print('Connected to: {}:{}'.format(client_addr[0], str(client_addr[1])))
+            print('[Status] Connected to: {}:{}'
+                    .format(client_addr[0], str(client_addr[1])))
 
             # new thread for self-setup as onion_router
             t = threading.Thread(target=two_way_setup, args=(back_conn,))
             t.start()
 
     except (socket.error, KeyboardInterrupt):
+        if args.verbose: print('[Error] Router Node DOWN')
         LISTENER_SOCKET.close()
 
 
@@ -58,37 +62,38 @@ def main():
 # need to establish symkey with back_conn, connect to forw_conn
 def two_way_setup(back_conn):
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
+    if args.verbose: print('[Status] received SYN')
 
     # (TODO:decrypt data, initialize+respond with symkey. for now send 'ACK')
-    back_conn.send("ACK".encode('utf-8'))
+    back_conn.sendall("ACK".encode('utf-8'))
 
     # Wait for first-ever onion from back_conn
-    print('[Onion] Waiting for data onion...')
+    if args.verbose: print('[Status] Waiting for first data onion...')
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
-    print('[Onion] Got data onion.')
+    if args.verbose: print('[Status] First data onion: {}'.format(msg))
 
     # (TODO:decrypt)
 
     # parse onion to find out who to send to and what to send
     msg_dict = json.loads(msg)
-    msg_data = msg_dict["data"]
     msg_addr = msg_dict["addr"]
-    
-    if "port" in msg_dict:
-        port = msg_dict["port"]
-    else:
-        port = DEFAULT_NEXT_PORT
+    msg_next = msg_dict["next"] 
+
+    port = int(msg_dict["port"]) if "port" in msg_dict else DEFAULT_NEXT_PORT
 
     # connect to forw_conn and pass along data from back_conn
     forw_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print('[Onion] Connecting to next onion node...')
+    if args.verbose: print('[Status] Connecting to next onion node...')
     forw_conn.connect((msg_addr, port))
-    print('[Onion] Connected.')
-    forw_conn.send(json.dumps(msg_data).encode('utf-8'))
-
+    if args.verbose: print('[Status] Connected.')
+    
+    if args.verbose: print('[Status] Sending: {} To: {}'.format(msg_next, msg_addr))
+    forw_conn.sendall(msg_next.encode('utf-8'))
+    
     # now that two way communication is established, pass data back and forth forever
 
-    t = threading.Thread(target=backward_transfer, args=(forw_conn, back_conn))
+    t = threading.Thread(target=backward_transfer, args=(forw_conn,
+                        back_conn), daemon=True)
     t.start()
     forward_transfer(back_conn, forw_conn)
 
@@ -100,20 +105,23 @@ def two_way_setup(back_conn):
 def forward_transfer(back_conn, forw_conn):
     while True:
         msg = back_conn.recv(2048).decode('utf-8').rstrip()
+        
+        if args.verbose: print('[Data] From back_conn: {}'.format(msg))
 
         # (TODO: decrypt)
 
         # pass it on
-        forw_conn.send(msg.encode('utf-8'))
+        forw_conn.sendall(msg.encode('utf-8'))
 
 def backward_transfer(forw_conn, back_conn):
     while True:
         msg = forw_conn.recv(2048).decode('utf-8').rstrip()
 
+        if args.verbose: print('[Data] From fwd_conn: {}'.format(msg))
         # (TODO: encrypt)
 
         # pass it on
-        back_conn.send(msg.encode('utf-8'))
+        back_conn.sendall(msg.encode('utf-8'))
 
 
 
