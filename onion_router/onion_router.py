@@ -57,8 +57,6 @@ def main():
 
 # need to establish symkey with back_conn, connect to forw_conn
 def two_way_setup(back_conn):
-    global DEFAULT_NEXT_PORT
-
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
 
     # (TODO:decrypt data, initialize+respond with symkey. for now send 'ACK')
