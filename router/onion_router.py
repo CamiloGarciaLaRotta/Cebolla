@@ -64,14 +64,13 @@ def two_way_setup(back_conn):
     back_conn.sendall("ACK".encode('utf-8'))
 
     # Wait for first-ever onion from back_conn
-    if args.verbose: print('[Onion] Waiting for setup onion...')
+    if args.verbose: print('[Onion] Waiting for first data onion...')
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
-    if args.verbose: print('[Onion] Got setup onion.')
+    if args.verbose: print('[Onion] First data onion: {}'.format(msg))
 
     # (TODO:decrypt)
 
     # parse onion to find out who to send to and what to send
-    if args.verbose: print('First data onion: {}'.format(msg))
     msg_dict = json.loads(msg)
     msg_addr = msg_dict["addr"]
     msg_next = msg_dict["next"] 

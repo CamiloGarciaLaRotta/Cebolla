@@ -26,7 +26,8 @@ if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
 #################################################################################
 
 HOST = ''                            # empty string => all IPs of this machine
-PORT = args.port                     # port for server to listen on, cli arg
+PORT = args.port                     # port for server to send data onto, cli arg
+SENDER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 DIRECTORY_NODE = 'cs-1'              # TODO hardcoded value or CL argument
 
@@ -44,6 +45,7 @@ def main():
     try:
         run_client_node()
     except (socket.error, KeyboardInterrupt, Exception) as e:
+        SENDER_SOCKET.close()
         if args.verbose: print('Client Node DOWN')
         exit(str(e))
 
@@ -57,15 +59,23 @@ def run_client_node():
     path.append({'addr' : args.destination, 'key': 'DST_KEY'})
     if args.verbose: print('Path: {}'.format(path))
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((path[0]['addr'],PORT))
+    SENDER_SOCKET.connect((path[0]['addr'],PORT))
 
     if args.verbose: print('Setting up VC...')
-    if not setup_vc(path, s): raise Exception('Could not setup VC')
+    if not setup_vc(path, SENDER_SOCKET): raise Exception('Could not setup VC')
 
-    t = threading.Thread(target=handle_response, args=(s,))
+    t = threading.Thread(target=handle_response, args=(SENDER_SOCKET,), daemon=True)
     t.start()
 
+    # send first data onion 
+    msg = input('Enter Message > ')
+    first_onion = encapsulate(path[3]['addr'], path[3]['key'], msg)
+    if args.verbose: print('First_onion: {}'.format(first_onion))
+    
+    # TODO encrypt data
+    
+    SENDER_SOCKET.sendall(json.dumps(first_onion).encode('utf-8'))
+    
     if args.verbose: print('Virtual Circuit UP')
 
     while True:
@@ -73,7 +83,7 @@ def run_client_node():
             
         # TODO encrypt
 
-        s.sendall(msg.encode('utf-8'))
+        SENDER_SOCKET.sendall(msg.encode('utf-8'))
 
 
 def get_path():
@@ -81,11 +91,10 @@ def get_path():
     dir_sock.connect((DIRECTORY_NODE,PORT))
 
     # TODO define what to send because directory doesn't even care
-    dir_sock.sendall(b'TODO')
+    dir_sock.sendall(b'SYN')
 
     data = dir_sock.recv(1024).decode('utf-8').rstrip()
 
-    # TODO code directory-side get path
     path = json.loads(data)
 
     dir_sock.close()
@@ -99,8 +108,8 @@ def setup_vc(path, conn):
     if response != 'ACK': return false
     if args.verbose: print('ACK recieved')
 
-    # get ACK for remaining nodes and destination
-    for i in range(1,4):
+    # get ACK for remaining internal nodes
+    for i in range(1,3):
         setup_onion = encapsulate(path[i]['addr'], path[i]['key'], 'SYN')
         if args.verbose: print('setup_onion: {}'.format(setup_onion))
         
@@ -110,8 +119,7 @@ def setup_vc(path, conn):
         response = conn.recv(1024).decode('utf-8').rstrip()
         if response != 'ACK': return false
         if args.verbose: print('ACK recieved')
-
-
+    
     return True
 
 
