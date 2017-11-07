@@ -1,8 +1,4 @@
 import argparse             # for command-line argument parsing
-def shut_down_directory_node():
-    LISTEN_SOCKET.close()
-    if args.verbose: print('Client Node DOWN')
-
 import random               # for random path selection
 import socket               # for TCP communication
 import json                 # for encoding data sent through TCP
@@ -34,9 +30,6 @@ PORT = args.port                     # port for server to listen on, cli arg
 
 DIRECTORY_NODE = 'cs-1'              # TODO hardcoded value or CL argument
 
-LISTEN_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-LISTEN_SOCKET.bind((HOST, PORT))
-LISTEN_SOCKET.listen(1)
 
 encapsulate = lambda addr, key, next_node: {'addr': addr, 'key': key,
                                             'next': next_node} 
@@ -51,7 +44,7 @@ def main():
     try:
         run_client_node()
     except (socket.error, KeyboardInterrupt, Exception) as e:
-        shut_down_directory_node()
+        if args.verbose: print('Client Node DOWN')
         exit(str(e))
 
 
@@ -129,11 +122,6 @@ def handle_response(conn):
         # TODO decrypt
 
         print('\nReply from {}: {}'.format('ADD SRC',msg))
-
-
-def shut_down_directory_node():
-    LISTEN_SOCKET.close()
-    if args.verbose: print('Client Node DOWN')
 
 
 #   RUN MAIN
