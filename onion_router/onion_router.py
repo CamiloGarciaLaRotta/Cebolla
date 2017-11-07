@@ -29,6 +29,7 @@ HOST = ""
 LISTENER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 LISTENER_SOCKET.bind((HOST,PORT))
 LISTENER_SOCKET.listen(50)
+DEFAULT_NEXT_PORT = 80
 
 
 
@@ -72,11 +73,16 @@ def two_way_setup(back_conn):
     msg_dict = json.loads(msg)
     msg_data = msg_dict["data"]
     msg_addr = msg_dict["addr"]
+    
+    if "port" in msg_dict:
+        port = msg_dict["port"]
+    else:
+        port = DEFAULT_NEXT_PORT
 
     # connect to forw_conn and pass along data from back_conn
     forw_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print('[Onion] Connecting to next onion node...')
-    forw_conn.connect((msg_addr, PORT))
+    forw_conn.connect((msg_addr, port))
     print('[Onion] Connected.')
     forw_conn.send(json.dumps(msg_data).encode('utf-8'))
 

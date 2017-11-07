@@ -19,7 +19,7 @@ class TestOnioning(unittest.TestCase):
         originator = Originator()
         onions = originator.get_onions()
         msg = ''.join([random.choice('abcdefghijklmnopqrstuvwxyz0123456789') for _ in range(0,4096)])
-        packet = originator.create_onion(onion.MessageType.Data, 3,  msg, 'Linus Torvalds')
+        packet = originator.create_onion(onion.MessageType.Data, 3,  msg, 'Linus Torvalds', 80)
 #        print('Originator creates:')
 #        print(packet.to_dict())
 #        print('')
@@ -46,7 +46,7 @@ class TestPublicKeyCrypto(unittest.TestCase):
     def test_basic_rsa(self):
         keypair = RSAVirtuoso()
         sender = RSAVirtuoso(keypair.get_public_key())
-        msg = ''.join([random.choice('abcdefghijklmnopqrstuvwxyz0123456789') for _ in range(0,256)])
+        msg = ''.join([random.choice('abcdefghijklmnopqrstuvwxyz0123456789') for _ in range(0,256)]).encode('utf-8')
         cipher = sender.encrypt(msg)
         self.assertEqual(keypair.decrypt(cipher), msg)
 
@@ -56,7 +56,7 @@ class TestEstablishment(unittest.TestCase):
         originator = Originator()
         originator.set_pubkeys(list(map(lambda x: RSAVirtuoso(x.get_public_key()), nodes)))
         path = originator.get_path()
-        packet = originator.create_onion(onion.MessageType.Establish, 1, '', 0).to_dict()
+        packet = originator.create_onion(onion.MessageType.Establish, 1, '', 0, 80).to_dict()
         addr = int(packet["addr"])
         while packet["type"] != "Establish":
             packet = packet["data"]
@@ -65,7 +65,7 @@ class TestEstablishment(unittest.TestCase):
         keydata = json.loads(packet["data"])
         k = base64.b64decode(keydata["symkey"])
         symkey = nodes[addr].decrypt(k)
-        self.assertEqual(path[addr][1],symkey)
+        self.assertEqual(path[addr][1], symkey)
 
 if __name__ == '__main__':
     unittest.main()
