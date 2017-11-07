@@ -32,25 +32,27 @@ SOCKET_LISTEN.bind((HOST,PORT))
 SOCKET_LISTEN.listen(1)
 
 def main():
+    if args.verbose: print('[Status] Destination Node UP')
     try:
         while 1:
             conn_socket, client_addr = SOCKET_LISTEN.accept()
-            t = threading.Thread(target=reply, args=(conn_socket,))
+            t = threading.Thread(target=reply, 
+                                args=(conn_socket, client_addr), daemon=True)
             t.start()
     except KeyboardInterrupt:
+        if args.verbose: print('[Error] Destination Node DOWN')
         SOCKET_LISTEN.close()
 
-def reply(conn_socket):
+def reply(conn_socket, addr):
     try:
         while True:
             msg = conn_socket.recv(2048).decode('utf-8')
-            print('Recieved: {}'.format(msg))
-            if msg == 'SYN': 
-                conn_socket.send(b'ACK')
-            else: 
-                mod_msg = msg.upper().encode('utf-8')
-                conn_socket.send(mod_msg)
+            print('[Status] Recieved: {} from: {}:{}'.format(msg, addr[0], str(addr[1])))
+            mod_msg = msg.upper().encode('utf-8')
+            conn_socket.send(mod_msg)
     except Exception as e:
+        if args.verbose: print('[Error] Lost communication with {}:{}'
+                                .format(addr[0], str(addr[1])))
         conn_socket.close()
 
 if __name__ == "__main__":
