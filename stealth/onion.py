@@ -1,11 +1,9 @@
 import base64
-import jmsg
 import json
 import random
 import stealth
 from enum import Enum
 from itertools import dropwhile
-from jmsg import JSONMessage
 from stealth import AESProdigy
 from stealth import RSAVirtuoso
 from Crypto.Random.Fortuna.FortunaGenerator import AESGenerator
@@ -23,8 +21,7 @@ class MessageType(Enum):
 
 class Originator(object):
     def __init__(self):
-        self.key = stealth.get_random_key(16);
-        circuit = dummy_get_onion_circuit(self.key)
+        circuit = dummy_get_onion_circuit()
         self.path = circuit[0]
         self.onions = circuit[1]
         self.gens = [AESGenerator() for i in range(len(self.path))]
@@ -55,17 +52,6 @@ class Originator(object):
             ciphertext = machine.encrypt(ciphertext)
         return ciphertext
 
-    # Adds another onion layer to a message
-    def add_layer(self, msg, node, first):
-        machine = AESProdigy(self.path[node][1], self.gens[node].pseudo_random_data(16))
-        msg = machine.encrypt(msg)
-        if first:
-            padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(msg)
-            msg = add_padding(msg)
-            machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
-            msg = machine.encrypt(msg)
-        return JSONMessage("Onion", self.path[node][0], msg)
-
     def set_pubkeys(self, keys):
         self.pubkeys = keys
 
@@ -93,24 +79,6 @@ class OnionNode(object):
         self.set_key(base64.b64decode(msg_dict["symkey"]))
         return (msg_dict["addr"], msg_dict["port"])
 
-# OBSOLETE Decrypts an onion layer to retrieve the underlying JSON for the next layer
-#    def peel_layer(self, cipher):
-#        machine = AESProdigy(self.prevKey, self.prevrng.pseudo_random_data(16))
-#        garbage = machine.decrypt(cipher)
-#        garbage = remove_padding(garbage)
-#        machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
-#        data = json.loads(machine.decrypt(garbage))
-#        if(data["type"] == "Onion"): 
-#            padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(data["data"])
-#            data["symkey"] = self.key
-#            data["data"] = add_padding(data["data"])
-#            machine = AESProdigy(self.key, self.nextrng.pseudo_random_data(16))
-#            data["data"] = machine.encrypt(data["data"])
-#        elif(data["type"] == "Establish"):
-#            self.set_prev_key(data["symkey"])
-#            self.set_key(self.keypair.decrypt(data["data"]))
-#        return data
-
     def peel_layer(self, cipher):
         machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
         return machine.decrypt(cipher)
@@ -119,7 +87,7 @@ class OnionNode(object):
         return self.keypair.decrypt(cipher)
 
 # Temporary until we merge with the directory node code
-def dummy_get_onion_circuit(key):
+def dummy_get_onion_circuit():
     path = []
     onions = []
     for i in range(0,PATH_LENGTH):
@@ -127,7 +95,6 @@ def dummy_get_onion_circuit(key):
         path.append((i, k))
         onion = OnionNode()
         onion.set_key(k)
-        onion.set_seed(k)
         onions.append(onion)
     return (path, onions)
 
