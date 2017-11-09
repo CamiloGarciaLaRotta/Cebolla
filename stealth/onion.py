@@ -19,7 +19,7 @@ class MessageType(Enum):
     Data = 2
     Establish = 3
 
-class Originator(object):
+class OriginatorSecurityEnforcer(object):
     def __init__(self):
         circuit = dummy_get_onion_circuit()
         self.path = circuit[0]
@@ -61,7 +61,7 @@ class Originator(object):
     def set_pubkeys(self, keys):
         self.pubkeys = keys
 
-class OnionNode(object):
+class OnionNodeSecurityEnforcer(object):
     def __init__(self):
         self.key = None
         self.rng = AESGenerator()
@@ -103,7 +103,7 @@ def dummy_get_onion_circuit():
     for i in range(0,PATH_LENGTH):
         k = stealth.get_random_key(16)
         path.append((i, k))
-        onion = OnionNode()
+        onion = OnionNodeSecurityEnforcer()
         onion.set_key(k)
         onions.append(onion)
     return (path, onions)

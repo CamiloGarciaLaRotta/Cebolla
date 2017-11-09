@@ -4,8 +4,8 @@ import onion
 import random
 import stealth
 from stealth import RSAVirtuoso
-from onion import Originator
-from onion import OnionNode
+from onion import OriginatorSecurityEnforcer
+from onion import OnionNodeSecurityEnforcer
 
 import unittest
 
@@ -48,8 +48,8 @@ class TestSymkeyCommunication(unittest.TestCase):
     def test_basic_symkey_message(self):
         addr = 'cs-1.cs.mcgill.ca'
         port = 5551
-        originator = Originator()
-        node = OnionNode()
+        originator = OriginatorSecurityEnforcer()
+        node = OnionNodeSecurityEnforcer()
         originator.set_pubkeys([RSAVirtuoso(node.get_public_key())])
         msg = originator.create_symkey_msg(1, addr, port)
         data = node.extract_path_data(msg)
@@ -59,8 +59,8 @@ class TestSymkeyCommunication(unittest.TestCase):
 class TestDataCommunication(unittest.TestCase):
     def test_basic_data_message(self):
         message = 'Hello, Newman'
-        originator = Originator()
-        node = OnionNode()
+        originator = OriginatorSecurityEnforcer()
+        node = OnionNodeSecurityEnforcer()
         originator.set_pubkeys([RSAVirtuoso(node.get_public_key())])
         msg = originator.create_symkey_msg(1, 'cs-1.cs.mcgill.ca', 5551)
         data = node.extract_path_data(msg)
@@ -70,7 +70,7 @@ class TestDataCommunication(unittest.TestCase):
 
     def test_basic_message_retrieval(self):
         message = 'Hello, Newman'
-        originator = Originator()
+        originator = OriginatorSecurityEnforcer()
         nodes = originator.get_onions()
         cipher = message
         for c in range(len(nodes)-1, -1, -1):
