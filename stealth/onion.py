@@ -24,14 +24,12 @@ class MessageType(Enum):
 class Originator(object):
     def __init__(self):
         self.key = stealth.get_random_key(16);
-        a = dummy_get_onion_circuit(self.key)
-        self.path = a[0]
-        self.onions = a[1] # For testing before network only
+        circuit = dummy_get_onion_circuit(self.key)
+        self.path = circuit[0]
+        self.onions = circuit[1]
         self.gens = [AESGenerator() for i in range(len(self.path))]
         for c in range(len(self.path)):
             self.gens[c].reseed(self.path[c][1])
-        self.rng = AESGenerator()
-        self.rng.reseed(self.key[8:16])
         self.pubkeys = []
 
     def get_onions(self): # For testing before network only
@@ -40,10 +38,9 @@ class Originator(object):
     def get_path(self):
         return self.path
 
-    # Creates the full encryption-layered message
-    def create_onion(self, mtype, depth, msg, dst, dstPort=80):
-        if mtype == MessageType.Data: msg = JSONMessage("Data", dst, msg, dstPort)
-        elif mtype == MessageType.Establish: msg = JSONMessage("Establish", dst, self.create_symkey_msg(depth), dstPort)
+    # Creates the encrypted, JSON-layered establishment onions
+    def create_estab_onion(self, mtype, depth, msg, dst, dstPort=80):
+        msg = JSONMessage("Establish", dst, self.create_symkey_msg(depth), dstPort)
         for i in range(depth-1,0,-1): # Cycles list in reverse order
             msg = self.add_layer(msg.to_string(), i, False)
         if(mtype == MessageType.Data): msg = self.add_layer(msg.to_string(), 0, True)
@@ -60,14 +57,13 @@ class Originator(object):
             msg = machine.encrypt(msg)
         return JSONMessage("Onion", self.path[node][0], msg)
 
-    def create_symkey_msg(self, depth):
+    def create_symkey_msg(self, depth, next_addr, next_port):
         msg = {}
         sym = self.path[depth-1][1]
-        enc_sym = self.pubkeys[depth-1].encrypt(sym)
-        msg["symkey"] = base64.encodebytes(enc_sym[0]).decode('utf-8')
-        if(depth == 1): msg["prevKey"] = base64.encodebytes(self.pubkeys[depth-1].encrypt(self.key)[0]).decode('utf-8')
-        else: msg["prevKey"] = base64.encodebytes(self.pubkeys[depth-1].encrypt(self.path[depth-2][1])[0]).decode('utf-8')
-        return json.dumps(msg)
+        msg["symkey"] = base64.encodebytes(self.path[depth-1][1]).decode('utf-8')
+        msg["addr"] = next_addr
+        msg["port"] = next_port
+        return self.pubkeys[depth-1].encrypt(json.dumps(msg).encode('utf-8'))
 
     def set_pubkeys(self, keys):
         self.pubkeys = keys
@@ -75,10 +71,7 @@ class Originator(object):
 class OnionNode(object):
     def __init__(self):
         self.key = None
-        self.prevKey = None
         self.rng = AESGenerator()
-        self.prevrng = AESGenerator()
-        self.nextrng = AESGenerator()
         self.keypair = RSAVirtuoso()
     
     def get_public_key(self):
@@ -86,14 +79,18 @@ class OnionNode(object):
 
     def set_key(self, key):
         self.key = key
-        self.nextrng.reseed(self.key[8:16])
-
-    def set_prev_key(self, key):
-        self.prevKey = key
-        self.prevrng.reseed(key[8:16])
+        self.set_seed(key)
 
     def set_seed(self, seed):
         self.rng.reseed(seed)
+
+    #Extracts path data from establishment packet
+    #Returns tuple: (next address, next port)
+    def extract_path_data(self, cipher):
+        msg = self.keypair.decrypt(cipher).decode('utf-8')
+        msg_dict = json.loads(msg)
+        self.set_key(base64.b64decode(msg_dict["symkey"]))
+        return (msg_dict["addr"], msg_dict["port"])
 
     # Decrypts an onion layer to retrieve the underlying JSON for the next layer
     def peel_layer(self, cipher):
@@ -126,10 +123,6 @@ def dummy_get_onion_circuit(key):
         onion = OnionNode()
         onion.set_key(k)
         onion.set_seed(k)
-        if i == 0:
-            onion.set_prev_key(key)
-        else:
-            onion.set_prev_key(path[i-1][1])
         onions.append(onion)
     return (path, onions)
 
