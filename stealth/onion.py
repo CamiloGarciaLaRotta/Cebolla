@@ -52,6 +52,12 @@ class Originator(object):
             ciphertext = machine.encrypt(ciphertext)
         return ciphertext
 
+    def decipher_response(self, msg):
+        for c in range(len(self.path)):
+            machine = AESProdigy(self.path[c][1], self.gens[c].pseudo_random_data(16))
+            msg = machine.decrypt(msg)
+        return msg
+
     def set_pubkeys(self, keys):
         self.pubkeys = keys
 
@@ -82,6 +88,10 @@ class OnionNode(object):
     def peel_layer(self, cipher):
         machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
         return machine.decrypt(cipher)
+
+    def add_layer(self, message):
+        machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
+        return machine.encrypt(message)
 
     def decrypt(self, cipher):
         return self.keypair.decrypt(cipher)

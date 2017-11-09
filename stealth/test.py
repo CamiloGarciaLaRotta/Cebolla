@@ -68,6 +68,16 @@ class TestDataCommunication(unittest.TestCase):
         msg = node.peel_layer(ciphertext)
         self.assertEqual(msg, message)
 
+    def test_basic_message_retrieval(self):
+        message = 'Hello, Newman'
+        originator = Originator()
+        nodes = originator.get_onions()
+        cipher = message
+        for c in range(len(nodes)-1, -1, -1):
+            cipher = nodes[c].add_layer(cipher)
+        retrieved = originator.decipher_response(cipher)
+        self.assertEqual(message, retrieved)
+
 #Obsolete, for now
 #class TestEstablishment(unittest.TestCase):
 #    def test_basic_establishment(self):
