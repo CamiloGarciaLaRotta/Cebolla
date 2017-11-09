@@ -38,13 +38,22 @@ class Originator(object):
     def get_path(self):
         return self.path
 
-    # Creates the encrypted, JSON-layered establishment onions
-    def create_estab_onion(self, mtype, depth, msg, dst, dstPort=80):
-        msg = JSONMessage("Establish", dst, self.create_symkey_msg(depth), dstPort)
-        for i in range(depth-1,0,-1): # Cycles list in reverse order
-            msg = self.add_layer(msg.to_string(), i, False)
-        if(mtype == MessageType.Data): msg = self.add_layer(msg.to_string(), 0, True)
-        return msg
+    def create_symkey_msg(self, depth, next_addr, next_port):
+        msg = {}
+        sym = self.path[depth-1][1]
+        msg["symkey"] = base64.encodebytes(self.path[depth-1][1]).decode('utf-8')
+        msg["addr"] = next_addr
+        msg["port"] = next_port
+        return self.pubkeys[depth-1].encrypt(json.dumps(msg).encode('utf-8'))
+
+    def create_onion(self, depth, msg):
+        ciphertext = msg
+        if depth > len(self.path):
+            depth = len(self.path)
+        for c in range(depth-1, -1, -1):
+            machine = AESProdigy(self.path[c][1], self.gens[c].pseudo_random_data(16))
+            ciphertext = machine.encrypt(ciphertext)
+        return ciphertext
 
     # Adds another onion layer to a message
     def add_layer(self, msg, node, first):
@@ -56,14 +65,6 @@ class Originator(object):
             machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
             msg = machine.encrypt(msg)
         return JSONMessage("Onion", self.path[node][0], msg)
-
-    def create_symkey_msg(self, depth, next_addr, next_port):
-        msg = {}
-        sym = self.path[depth-1][1]
-        msg["symkey"] = base64.encodebytes(self.path[depth-1][1]).decode('utf-8')
-        msg["addr"] = next_addr
-        msg["port"] = next_port
-        return self.pubkeys[depth-1].encrypt(json.dumps(msg).encode('utf-8'))
 
     def set_pubkeys(self, keys):
         self.pubkeys = keys
@@ -92,23 +93,27 @@ class OnionNode(object):
         self.set_key(base64.b64decode(msg_dict["symkey"]))
         return (msg_dict["addr"], msg_dict["port"])
 
-    # Decrypts an onion layer to retrieve the underlying JSON for the next layer
+# OBSOLETE Decrypts an onion layer to retrieve the underlying JSON for the next layer
+#    def peel_layer(self, cipher):
+#        machine = AESProdigy(self.prevKey, self.prevrng.pseudo_random_data(16))
+#        garbage = machine.decrypt(cipher)
+#        garbage = remove_padding(garbage)
+#        machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
+#        data = json.loads(machine.decrypt(garbage))
+#        if(data["type"] == "Onion"): 
+#            padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(data["data"])
+#            data["symkey"] = self.key
+#            data["data"] = add_padding(data["data"])
+#            machine = AESProdigy(self.key, self.nextrng.pseudo_random_data(16))
+#            data["data"] = machine.encrypt(data["data"])
+#        elif(data["type"] == "Establish"):
+#            self.set_prev_key(data["symkey"])
+#            self.set_key(self.keypair.decrypt(data["data"]))
+#        return data
+
     def peel_layer(self, cipher):
-        machine = AESProdigy(self.prevKey, self.prevrng.pseudo_random_data(16))
-        garbage = machine.decrypt(cipher)
-        garbage = remove_padding(garbage)
         machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))
-        data = json.loads(machine.decrypt(garbage))
-        if(data["type"] == "Onion"): 
-            padding = PATH_LENGTH * MAX_MESSAGE_SIZE - len(data["data"])
-            data["symkey"] = self.key
-            data["data"] = add_padding(data["data"])
-            machine = AESProdigy(self.key, self.nextrng.pseudo_random_data(16))
-            data["data"] = machine.encrypt(data["data"])
-        elif(data["type"] == "Establish"):
-            self.set_prev_key(data["symkey"])
-            self.set_key(self.keypair.decrypt(data["data"]))
-        return data
+        return machine.decrypt(cipher)
 
     def decrypt(self, cipher):
         return self.keypair.decrypt(cipher)

@@ -56,6 +56,18 @@ class TestSymkeyCommunication(unittest.TestCase):
         self.assertEqual(data[0], addr)
         self.assertEqual(data[1], port)
 
+class TestDataCommunication(unittest.TestCase):
+    def test_basic_data_message(self):
+        message = 'Hello, Newman'
+        originator = Originator()
+        node = OnionNode()
+        originator.set_pubkeys([RSAVirtuoso(node.get_public_key())])
+        msg = originator.create_symkey_msg(1, 'cs-1.cs.mcgill.ca', 5551)
+        data = node.extract_path_data(msg)
+        ciphertext = originator.create_onion(1, message)
+        msg = node.peel_layer(ciphertext)
+        self.assertEqual(msg, message)
+
 #Obsolete, for now
 #class TestEstablishment(unittest.TestCase):
 #    def test_basic_establishment(self):
