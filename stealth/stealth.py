@@ -1,4 +1,5 @@
 import base64
+import json
 from Crypto.Cipher import AES
 from Crypto import Random
 from Crypto.PublicKey import RSA
@@ -51,4 +52,11 @@ class RSAVirtuoso(object):
 
     def decrypt(self, cipher):
         return self.key.decrypt(cipher)
-#        return self.key.decrypt(cipher).decode('utf-8')
+
+    def extract_path_data(self, cipher):
+        msg = self.key.decrypt(cipher).decode('utf-8')
+        msg_dict = json.loads(msg)
+        symkey = base64.b64decode(msg_dict["symkey"])
+        addr = msg_dict["addr"]
+        port = msg_dict["port"]
+        return (symkey, addr, port)

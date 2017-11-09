@@ -65,25 +65,13 @@ class OnionNodeSecurityEnforcer(object):
     def __init__(self):
         self.key = None
         self.rng = AESGenerator()
-        self.keypair = RSAVirtuoso()
     
-    def get_public_key(self):
-        return self.keypair.get_public_key()
-
     def set_key(self, key):
         self.key = key
         self.set_seed(key)
 
     def set_seed(self, seed):
         self.rng.reseed(seed)
-
-    #Extracts path data from establishment packet
-    #Returns tuple: (next address, next port)
-    def extract_path_data(self, cipher):
-        msg = self.keypair.decrypt(cipher).decode('utf-8')
-        msg_dict = json.loads(msg)
-        self.set_key(base64.b64decode(msg_dict["symkey"]))
-        return (msg_dict["addr"], msg_dict["port"])
 
     def peel_layer(self, cipher):
         machine = AESProdigy(self.key, self.rng.pseudo_random_data(16))

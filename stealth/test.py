@@ -49,21 +49,23 @@ class TestSymkeyCommunication(unittest.TestCase):
         addr = 'cs-1.cs.mcgill.ca'
         port = 5551
         originator = OriginatorSecurityEnforcer()
-        node = OnionNodeSecurityEnforcer()
-        originator.set_pubkeys([RSAVirtuoso(node.get_public_key())])
+        nodekey = RSAVirtuoso()
+        originator.set_pubkeys([RSAVirtuoso(nodekey.key.publickey())])
         msg = originator.create_symkey_msg(1, addr, port)
-        data = node.extract_path_data(msg)
-        self.assertEqual(data[0], addr)
-        self.assertEqual(data[1], port)
+        data = nodekey.extract_path_data(msg)
+        self.assertEqual(data[1], addr)
+        self.assertEqual(data[2], port)
 
 class TestDataCommunication(unittest.TestCase):
     def test_basic_data_message(self):
         message = 'Hello, Newman'
         originator = OriginatorSecurityEnforcer()
         node = OnionNodeSecurityEnforcer()
-        originator.set_pubkeys([RSAVirtuoso(node.get_public_key())])
+        nodekey = RSAVirtuoso()
+        originator.set_pubkeys([RSAVirtuoso(nodekey.key.publickey())])
         msg = originator.create_symkey_msg(1, 'cs-1.cs.mcgill.ca', 5551)
-        data = node.extract_path_data(msg)
+        data = nodekey.extract_path_data(msg)
+        node.set_key(data[0])
         ciphertext = originator.create_onion(1, message)
         msg = node.peel_layer(ciphertext)
         self.assertEqual(msg, message)
