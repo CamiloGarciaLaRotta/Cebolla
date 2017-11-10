@@ -32,6 +32,10 @@ class OriginatorSecurityEnforcer(object):
     def get_path(self):
         return self.path
 
+    # Creates public key encrypted JSON with symkey and next address/port
+    # depth is how far in the path the destination onion should be
+    # Ex, if you're establishing a connection with the second onion, set depth=2
+    # If you are communicating with the directory node, set depth=0
     def create_symkey_msg(self, depth, next_addr, next_port):
         msg = {}
         if depth > 0:
@@ -45,6 +49,9 @@ class OriginatorSecurityEnforcer(object):
         msg["port"] = next_port
         return pubkey.encrypt(json.dumps(msg))
 
+    # Creates symmetric key encrypted message
+    # depth is how many onion nodes it will be passed through
+    # Set depth=0 if talking to the directory node, depth=1 for the first node in the path...etc
     def create_onion(self, depth, msg):
         ciphertext = msg
         if depth < 1:
@@ -58,6 +65,9 @@ class OriginatorSecurityEnforcer(object):
                 ciphertext = machine.encrypt(ciphertext)
         return ciphertext
 
+    # Decrypts encryption layers from a response message
+    # Depth is how many onion nodes  have encrypted the response
+    # Ex, if passed through all onion nodes, depth=amount of nodes in path
     def decipher_response(self, depth, msg):
         if depth < 1:
             machine = AESProdify(self.directorySymKey, self.directoryGen.pseudo_random_data(16))
