@@ -77,7 +77,7 @@ class TestDataCommunication(unittest.TestCase):
         cipher = message
         for c in range(len(nodes)-1, -1, -1):
             cipher = nodes[c].add_layer(cipher)
-        retrieved = originator.decipher_response(cipher)
+        retrieved = originator.decipher_response(len(nodes), cipher)
         self.assertEqual(message, retrieved)
 
 #Obsolete, for now

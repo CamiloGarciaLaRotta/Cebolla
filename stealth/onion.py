@@ -18,6 +18,10 @@ class OriginatorSecurityEnforcer(object):
         self.path = circuit[0]
         self.onions = circuit[1]
         self.gens = [AESGenerator() for i in range(len(self.path))]
+        self.directorySymKey = stealth.get_random_key(16)
+        self.directoryGen = AESGenerator()
+        self.directoryGen.reseed(self.directorySymKey)
+        self.directoryPubKey = None
         for c in range(len(self.path)):
             self.gens[c].reseed(self.path[c][1])
         self.pubkeys = []
@@ -30,25 +34,38 @@ class OriginatorSecurityEnforcer(object):
 
     def create_symkey_msg(self, depth, next_addr, next_port):
         msg = {}
-        sym = self.path[depth-1][1]
-        msg["symkey"] = base64.encodebytes(self.path[depth-1][1]).decode('utf-8')
+        if depth > 0:
+            sym = self.path[depth-1][1]
+            pubkey = self.pubkeys[depth-1]
+        else:
+            sym = self.directorySymKey
+            pubkey = self.directoryPubKey
+        msg["symkey"] = base64.encodebytes(sym).decode('utf-8')
         msg["addr"] = next_addr
         msg["port"] = next_port
-        return self.pubkeys[depth-1].encrypt(json.dumps(msg))
+        return pubkey.encrypt(json.dumps(msg))
 
     def create_onion(self, depth, msg):
         ciphertext = msg
-        if depth > len(self.path):
-            depth = len(self.path)
-        for c in range(depth-1, -1, -1):
-            machine = AESProdigy(self.path[c][1], self.gens[c].pseudo_random_data(16))
+        if depth < 1:
+            machine = AESProdigy(self.directorySymKey, self.directoryGen.pseudo_random_data(16))
             ciphertext = machine.encrypt(ciphertext)
+        else:
+            if depth > len(self.path):
+                depth = len(self.path)
+            for c in range(depth-1, -1, -1):
+                machine = AESProdigy(self.path[c][1], self.gens[c].pseudo_random_data(16))
+                ciphertext = machine.encrypt(ciphertext)
         return ciphertext
 
-    def decipher_response(self, msg):
-        for c in range(len(self.path)):
-            machine = AESProdigy(self.path[c][1], self.gens[c].pseudo_random_data(16))
+    def decipher_response(self, depth, msg):
+        if depth < 1:
+            machine = AESProdify(self.directorySymKey, self.directoryGen.pseudo_random_data(16))
             msg = machine.decrypt(msg)
+        else:
+            for c in range(depth):
+                machine = AESProdigy(self.path[c][1], self.gens[c].pseudo_random_data(16))
+                msg = machine.decrypt(msg)
         return msg
 
     def set_pubkeys(self, keys):
