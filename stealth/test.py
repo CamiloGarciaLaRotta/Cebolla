@@ -42,7 +42,7 @@ class TestPublicKeyCrypto(unittest.TestCase):
         sender = RSAVirtuoso(keypair.get_public_key())
         msg = ''.join([random.choice('abcdefghijklmnopqrstuvwxyz0123456789') for _ in range(0,256)]).encode('utf-8')
         cipher = sender.encrypt(msg)
-        self.assertEqual(keypair.decrypt(cipher), msg)
+        self.assertEqual(keypair.decrypt(cipher), msg.decode('utf-8'))
 
 class TestSymkeyCommunication(unittest.TestCase):
     def test_basic_symkey_message(self):

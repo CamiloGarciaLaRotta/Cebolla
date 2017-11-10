@@ -52,12 +52,12 @@ class RSAVirtuoso(object):
         return self.key.encrypt(msg, 742072781)
 
     def decrypt(self, cipher):
-        return self.key.decrypt(cipher)
+        return self.key.decrypt(cipher).decode('utf-8')
 
     #Extracts symmetric key, next node address, and next node port from RSA-encrypted establishment packet
     #Returns (symkey, addr, port)
     def extract_path_data(self, cipher):
-        msg = self.key.decrypt(cipher).decode('utf-8')
+        msg = self.decrypt(cipher)#.decode('utf-8')
         msg_dict = json.loads(msg)
         symkey = base64.b64decode(msg_dict["symkey"])
         addr = msg_dict["addr"]
