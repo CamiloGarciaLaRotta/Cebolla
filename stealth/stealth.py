@@ -49,15 +49,15 @@ class RSAVirtuoso(object):
         return self.key.publickey()
 
     def encrypt(self, msg):
-        return self.key.encrypt(msg, 742072781)
+        return base64.b64encode(self.key.encrypt(msg.encode('utf-8'), 742072781)[0]).decode('utf-8')
 
     def decrypt(self, cipher):
-        return self.key.decrypt(cipher).decode('utf-8')
+        return self.key.decrypt(base64.b64decode(cipher)).decode('utf-8')
 
     #Extracts symmetric key, next node address, and next node port from RSA-encrypted establishment packet
     #Returns (symkey, addr, port)
     def extract_path_data(self, cipher):
-        msg = self.decrypt(cipher)#.decode('utf-8')
+        msg = self.decrypt(cipher)
         msg_dict = json.loads(msg)
         symkey = base64.b64decode(msg_dict["symkey"])
         addr = msg_dict["addr"]

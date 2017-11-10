@@ -34,7 +34,7 @@ class OriginatorSecurityEnforcer(object):
         msg["symkey"] = base64.encodebytes(self.path[depth-1][1]).decode('utf-8')
         msg["addr"] = next_addr
         msg["port"] = next_port
-        return self.pubkeys[depth-1].encrypt(json.dumps(msg).encode('utf-8'))
+        return self.pubkeys[depth-1].encrypt(json.dumps(msg))
 
     def create_onion(self, depth, msg):
         ciphertext = msg
