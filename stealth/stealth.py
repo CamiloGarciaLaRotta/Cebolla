@@ -6,6 +6,7 @@ from Crypto.PublicKey import RSA
 
 RSA_KEY_SIZE = 2048
 
+#Block Size for AES
 BS = 16
 
 # pads plain text such that its length is a multiple of BS.
@@ -53,6 +54,8 @@ class RSAVirtuoso(object):
     def decrypt(self, cipher):
         return self.key.decrypt(cipher)
 
+    #Extracts symmetric key, next node address, and next node port from RSA-encrypted establishment packet
+    #Returns (symkey, addr, port)
     def extract_path_data(self, cipher):
         msg = self.key.decrypt(cipher).decode('utf-8')
         msg_dict = json.loads(msg)

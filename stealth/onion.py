@@ -12,13 +12,6 @@ PATH_LENGTH = 3
 
 MAX_MESSAGE_SIZE = 4096
 
-#onions = []
-
-class MessageType(Enum):
-    Onion = 1
-    Data = 2
-    Establish = 3
-
 class OriginatorSecurityEnforcer(object):
     def __init__(self):
         circuit = dummy_get_onion_circuit()
@@ -96,6 +89,9 @@ def dummy_get_onion_circuit():
         onions.append(onion)
     return (path, onions)
 
+
+#These functions can be used if we want to implement garbage padding. 
+#They aren't being used right now.
 def remove_padding(msg):
     for c in range(0, len(msg)):
         if c + 3 <= len(msg):
