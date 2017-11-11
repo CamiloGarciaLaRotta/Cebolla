@@ -4,6 +4,15 @@ import random               # for random path selection
 import socket               # for TCP communication
 import threading            # for one thread per TCP connection
 
+from Crypto.PublicKey import RSA
+
+import sys, os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../stealth'))
+import onion
+import stealth
+from onion import OriginatorSecurityEnforcer
+from stealth import RSAVirtuoso
+from stealth import AESProdigy
 
 #   CLI ARGS
 ###############################################################################
@@ -35,6 +44,8 @@ PORT = args.onion_port
 SENDER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 DIRECTORY_NODE = 'cs-1'            
+
+ORIGINATOR_CIPHER = OriginatorSecurityEnforcer()
 
 
 #   MAIN
@@ -96,13 +107,16 @@ def shut_down_client_node():
 
 
 def get_path():
+    global ORIGINATOR_CIPHER
+
     dir_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dir_sock.connect((DIRECTORY_NODE,PORT))
 
     dir_sock.sendall(socket.gethostname().encode('utf-8'))
 
     pubkey = dir_sock.recv(6144).decode('utf-8').rstrip()
-    print('Directory\'s pubkey: ' + pubkey)
+    ORIGINATOR_CIPHER.directoryPubKey = RSAVirtuoso(RSA.importKey(pubkey))
+    dir_sock.sendall('get me a path')
 
     data = dir_sock.recv(6144).decode('utf-8').rstrip()
     path = json.loads(data)
