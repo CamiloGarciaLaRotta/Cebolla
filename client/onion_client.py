@@ -64,11 +64,12 @@ def run_client_node():
     if args.verbose: print('[Status] Setting up VC...')
     if not setup_vc(path, SENDER_SOCKET): raise Exception('[Error] Could not setup VC')
 
-    t = threading.Thread(target=handle_response, args=(SENDER_SOCKET,), daemon=True)
+    t = threading.Thread(target=handle_response, args=(SENDER_SOCKET,))
+    t.setDaemon(True)
     t.start()
 
     # send first data onion 
-    msg = input('Enter Message > ')
+    msg = raw_input('Enter Message > ')
 
     first_onion = encapsulate(path[3]['addr'], path[3]['key'], 
                                 msg, args.destination_port)
@@ -82,7 +83,7 @@ def run_client_node():
     if args.verbose: print('[Status] Virtual Circuit UP')
 
     while True:
-        msg = input('Enter Message > ')
+        msg = raw_input('Enter Message > ')
             
         # TODO encrypt
 

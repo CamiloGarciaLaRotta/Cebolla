@@ -36,8 +36,8 @@ def main():
     try:
         while 1:
             conn_socket, client_addr = SOCKET_LISTEN.accept()
-            t = threading.Thread(target=reply, 
-                                args=(conn_socket, client_addr), daemon=True)
+            t = threading.Thread(target=reply, args=(conn_socket, client_addr))
+            t.setDaemon(True)
             t.start()
     except KeyboardInterrupt:
         if args.verbose: print('[Error] Destination Node DOWN')

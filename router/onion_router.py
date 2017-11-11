@@ -48,6 +48,7 @@ def main():
 
             # new thread for self-setup as onion_router
             t = threading.Thread(target=two_way_setup, args=(back_conn,))
+            t.setDaemon(True)
             t.start()
 
     except (socket.error, KeyboardInterrupt):
@@ -92,8 +93,8 @@ def two_way_setup(back_conn):
     
     # now that two way communication is established, pass data back and forth forever
 
-    t = threading.Thread(target=backward_transfer, args=(forw_conn,
-                        back_conn), daemon=True)
+    t = threading.Thread(target=backward_transfer, args=(forw_conn, back_conn))
+    t.setDaemon(True)
     t.start()
     forward_transfer(back_conn, forw_conn)
 

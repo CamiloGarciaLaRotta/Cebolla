@@ -1,8 +1,13 @@
 import argparse             # for command-line argument parsing
+import json                 # for encoding data sent through TCP
 import random               # for random path selection
 import socket               # for TCP communication
-import json                 # for encoding data sent through TCP
 import threading            # for one thread per TCP connection
+
+import sys
+import os.path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../stealth'))
+import stealth
 
 
 #   TODO:
@@ -41,10 +46,11 @@ MAX_NODES = args.max_nodes           # max number of nodes in onion network
 NODE_FORMAT = "lab2-{}.cs.mcgill.ca" # python formatstring of nodes' domain names
 NODES = [NODE_FORMAT.format(i) for i in range(1, MAX_NODES+1)]
 
+KEYPAIR = stealth.RSAVirtuoso()              # directory's encryption key pairs
+
 LISTEN_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 LISTEN_SOCKET.bind((HOST, PORT))
 LISTEN_SOCKET.listen(MAX_NODES)
-
 
 
 #   MAIN
@@ -79,7 +85,10 @@ def ping_node(ndn): # ndn = node domain name
     s.close()
 
     socket.setdefaulttimeout(None) # restore default
-    msg = "found " + ndn if not exit_code else "DID NOT FIND " + ndn
+    
+    if args.verbose: 
+        node_status = "LISTENING" if not exit_code else "DOWN"
+        print("Node {} is {}".format(ndn,node_status))
 
     return not exit_code
 
@@ -101,7 +110,9 @@ def run_directory_node():
         print('[Status] Connected to: {}:{}'.format(addr[0], str(addr[1])))
 
         # new thread for each connection
-        t = threading.Thread(target=handle_path_request, args=(conn,), daemon=True)
+        #t = threading.Thread(target=handle_path_request, args=(conn,), daemon=True) # TODO commented until reported to py3
+        t = threading.Thread(target=handle_path_request, args=(conn,))
+        t.setDaemon(True)
         t.start()
 
 def shut_down_directory_node():
