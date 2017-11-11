@@ -162,7 +162,9 @@ def setup_vc(path, conn):
         # TODO encrypt data
         
         conn.sendall(json.dumps(setup_onion).encode('utf-8'))
+        if args.verbose: print('[Status] received encrypted response..')
         response = conn.recv(1024).decode('utf-8').rstrip()
+        if i > 1 : response = ORIGINATOR_CIPHER.decipher_response(i-1, response)
 #        if response != 'ACK': return false
 #        if args.verbose: print('[Status] ACK recieved')
     
@@ -181,8 +183,8 @@ def handle_response(conn):
         msg = conn.recv(2048).decode('utf-8').rstrip()
 
         # TODO decrypt
-
-        print('\nReply from {}: {}'.format('ADD SRC',msg))
+        msg = ORIGINATOR_CIPHER.decipher_response(3, msg)
+        print('\nReply from {}: {}'.format(args.destination, msg))
 
 
 #   RUN MAIN

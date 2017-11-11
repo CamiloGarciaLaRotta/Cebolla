@@ -145,6 +145,7 @@ def two_way_setup(back_conn):
 ########################################################
 
 def forward_transfer(back_conn, forw_conn):
+    global ONION_CIPHER
     while True:
         msg = back_conn.recv(2048).decode('utf-8').rstrip()
         
@@ -162,6 +163,7 @@ def backward_transfer(forw_conn, back_conn):
 
         if args.verbose: print('[Data] From fwd_conn: {}'.format(msg))
         # (TODO: encrypt)
+        msg = ONION_CIPHER.add_layer(msg)
 
         # pass it on
         back_conn.sendall(msg.encode('utf-8'))
