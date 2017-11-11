@@ -44,7 +44,7 @@ class OriginatorSecurityEnforcer(object):
         else:
             sym = self.directorySymKey
             pubkey = self.directoryPubKey
-        msg["symkey"] = base64.encode(sym).decode('utf-8')
+        msg["symkey"] = base64.b64encode(sym).decode('utf-8')
         msg["addr"] = next_addr
         msg["port"] = next_port
         return pubkey.encrypt(json.dumps(msg))
