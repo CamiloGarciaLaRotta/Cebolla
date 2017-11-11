@@ -124,6 +124,11 @@ def get_path():
     data = dir_sock.recv(6144).decode('utf-8').rstrip()
 
     path = json.loads(ORIGINATOR_CIPHER.decipher_response(0,data))
+    if args.verbose:
+        print('Received path data: ' + str(path))
+
+    ORIGINATOR_CIPHER.set_path(path)
+    ORIGINATOR_CIPHER.set_pubkeys(list(map(lambda x: RSAVirtuoso(RSA.importKey(x["key"])), path)))
 
     dir_sock.close()
 
@@ -132,23 +137,31 @@ def get_path():
 # send setup onions to all the nodes in path through the conn socket
 def setup_vc(path, conn):
     # get ACK from first node
-    conn.sendall(b'SYN')
-    response = conn.recv(1024).decode('utf-8').rstrip()
-    if response != 'ACK': return false
-    if args.verbose: print('[Status] ACK recieved')
+#    conn.sendall(b'SYN')
+#    response = conn.recv(1024).decode('utf-8').rstrip()
+#    if response != 'ACK': return false
+#    if args.verbose: print('[Status] ACK recieved')
+
+    global ORIGINATOR_CIPHER
 
     # get ACK for remaining internal nodes
     for i in range(1,3):
-        setup_onion = encapsulate(path[i]['addr'], path[i]['key'], 
-                                'SYN', args.onion_port)
+#        setup_onion = encapsulate(path[i]['addr'], path[i]['key'], 
+#                                'SYN', args.onion_port)
+        if i != 3: nextaddr = ORIGINATOR_CIPHER.path[i][0]
+        else: nextaddr = args.destination
+        print('Creating symkey msg')
+        symkey_msg = ORIGINATOR_CIPHER.create_symkey_msg(i, nextaddr, PORT)
+        print('Creating onion')
+        setup_onion = ORIGINATOR_CIPHER.create_onion(i, symkey_msg)
         if args.verbose: print('[Status] setup_onion: {}'.format(setup_onion))
         
         # TODO encrypt data
         
         conn.sendall(json.dumps(setup_onion).encode('utf-8'))
         response = conn.recv(1024).decode('utf-8').rstrip()
-        if response != 'ACK': return false
-        if args.verbose: print('[Status] ACK recieved')
+#        if response != 'ACK': return false
+#        if args.verbose: print('[Status] ACK recieved')
     
     return True
 

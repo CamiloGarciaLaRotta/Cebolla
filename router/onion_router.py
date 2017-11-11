@@ -6,6 +6,8 @@ import socket           # for TCP communication
 import sys, os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../stealth'))
 import stealth          # for communication encryption
+import onion
+from onion import OnionNodeSecurityEnforcer
 
 
 #       CLI ARGS
@@ -41,6 +43,7 @@ DIR_SOCKET.bind((HOST,args.dir_port))
 DIR_SOCKET.listen(1)
 
 KEYPAIR = stealth.RSAVirtuoso()     # node's encryption key pairs
+ONION_CIPHER = OnionNodeSecurityEnforcer()
 
 DEFAULT_NEXT_PORT = 80              # default port of next hop in virtual circuit
 
@@ -94,35 +97,40 @@ def dir_setup():
 
 # establish virtual circuit with 2 connection threads: backwards node and forward node
 def two_way_setup(back_conn):
+    global ONION_CIPHER
+
     # TODO need to establish symkey with back_conn, connect to forw_conn
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
     if args.verbose: print('[Status] received SYN')
 
     # (TODO:decrypt data, initialize+respond with symkey. for now send 'ACK')
+    pathdata = KEYPAIR.extract_path_data(msg)
+    ONION_CIPHER.set_key(pathdata[0])
     back_conn.sendall("ACK".encode('utf-8'))
 
     # Wait for first-ever onion from back_conn
-    if args.verbose: print('[Status] Waiting for first data onion...')
+#    if args.verbose: print('[Status] Waiting for first data onion...')
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
-    if args.verbose: print('[Status] First data onion: {}'.format(msg))
+#    if args.verbose: print('[Status] First data onion: {}'.format(msg))
 
     # (TODO:decrypt)
+    msg = ONION_CIPHER.peel_layer(msg)
 
     # parse onion to find out who to send to and what to send
-    msg_dict = json.loads(msg)
-    msg_addr = msg_dict["addr"]
-    msg_next = msg_dict["next"] 
+#    msg_dict = json.loads(msg)
+#    msg_addr = msg_dict["addr"]
+#    msg_next = msg_dict["next"] 
 
-    port = int(msg_dict["port"]) if "port" in msg_dict else DEFAULT_NEXT_PORT
+#    port = int(msg_dict["port"]) if "port" in msg_dict else DEFAULT_NEXT_PORT
 
     # connect to forw_conn and pass along data from back_conn
     forw_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if args.verbose: print('[Status] Connecting to next onion node...')
-    forw_conn.connect((msg_addr, port))
+    forw_conn.connect((pathdata[1], pathdata[2]))
     if args.verbose: print('[Status] Connected.')
     
     if args.verbose: print('[Status] Sending: {} To: {}'.format(msg_next, msg_addr))
-    forw_conn.sendall(msg_next.encode('utf-8'))
+    forw_conn.sendall(msg.encode('utf-8'))
     
     # now that two way communication is established, pass data back and forth forever
 
