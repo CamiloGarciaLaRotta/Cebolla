@@ -53,7 +53,7 @@ ORIGINATOR_CIPHER = OriginatorSecurityEnforcer()
 
 def main():
     if args.verbose: print('[Status] Client Node UP')
-
+    
     try:
         run_client_node()
     except (socket.error, KeyboardInterrupt, Exception) as e:
@@ -70,7 +70,7 @@ def run_client_node():
 
     if args.verbose: print('[Status] Obtaining path...')
     path = get_path()
-    path.append({'addr' : args.destination, 'key': 'DST_KEY'}) # TODO does dst have a key?
+    path.append({'addr' : args.destination, 'key': 'DST_KEY', 'port': args.destination_port}) # TODO does dst have a key?
     if args.verbose: print('[Status] Path: {}'.format(path))
 
     SENDER_SOCKET.connect((path[0]['addr'],PORT))
@@ -154,7 +154,7 @@ def setup_vc(path, conn):
         if i != 3: nextaddr = ORIGINATOR_CIPHER.path[i][0]
         else: nextaddr = args.destination
         print('Creating symkey msg')
-        symkey_msg = ORIGINATOR_CIPHER.create_symkey_msg(i, nextaddr, PORT)
+        symkey_msg = ORIGINATOR_CIPHER.create_symkey_msg(i, nextaddr, path[i]["port"])
         print('Creating onion')
         setup_onion = ORIGINATOR_CIPHER.create_onion(i, symkey_msg)
         if args.verbose: print('[Status] setup_onion: {}'.format(setup_onion))

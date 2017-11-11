@@ -126,7 +126,7 @@ def two_way_setup(back_conn):
 
     # connect to forw_conn and pass along data from back_conn
     forw_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    if args.verbose: print('[Status] Connecting to next onion node...')
+    if args.verbose: print('[Status] Trying to connect to {} on port {}...'.format(pathdata[1], pathdata[2]))
     forw_conn.connect((pathdata[1], pathdata[2]))
     if args.verbose: print('[Status] Connected.')
     

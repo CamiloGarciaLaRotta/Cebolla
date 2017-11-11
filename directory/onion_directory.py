@@ -63,7 +63,7 @@ def main():
     nodes = ['lab2-{}'.format(i) for i in range(1, MAX_NODES+1)]
     up_nodes = list( filter(ping_node, nodes) ) 
     nodes_keys = zip(up_nodes, map(get_node_pubkey, up_nodes))
-    ROUTERS = [{'addr':x[0], 'key':x[1]} for x in nodes_keys]
+    ROUTERS = [{'addr':x[0], 'key':x[1], 'port': PORT} for x in nodes_keys]
 
     if args.verbose: print('[Status] Directory UP')
     try:
