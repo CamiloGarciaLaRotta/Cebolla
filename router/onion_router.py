@@ -101,7 +101,7 @@ def two_way_setup(back_conn):
 
     # TODO need to establish symkey with back_conn, connect to forw_conn
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
-    if args.verbose: print('[Status] received SYN')
+    if args.verbose: print('[Status] received estab: ' + msg)
 
     # (TODO:decrypt data, initialize+respond with symkey. for now send 'ACK')
     pathdata = KEYPAIR.extract_path_data(msg)
@@ -114,6 +114,7 @@ def two_way_setup(back_conn):
 #    if args.verbose: print('[Status] First data onion: {}'.format(msg))
 
     # (TODO:decrypt)
+    if args.verbose: print('[Status] received next: ' + msg)
     msg = ONION_CIPHER.peel_layer(msg)
 
     # parse onion to find out who to send to and what to send
@@ -129,7 +130,7 @@ def two_way_setup(back_conn):
     forw_conn.connect((pathdata[1], pathdata[2]))
     if args.verbose: print('[Status] Connected.')
     
-    if args.verbose: print('[Status] Sending: {} To: {}'.format(msg_next, msg_addr))
+    if args.verbose: print('[Status] Sending: {} To: {}'.format(msg, pathdata[1]))
     forw_conn.sendall(msg.encode('utf-8'))
     
     # now that two way communication is established, pass data back and forth forever
@@ -152,7 +153,7 @@ def forward_transfer(back_conn, forw_conn):
         # (TODO: decrypt)
 
         # pass it on
-        forw_conn.sendall(msg.encode('utf-8'))
+        forw_conn.sendall(ONION_CIPHER.peel_layer(msg).encode('utf-8'))
 
 
 def backward_transfer(forw_conn, back_conn):

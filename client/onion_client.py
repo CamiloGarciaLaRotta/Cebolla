@@ -66,6 +66,8 @@ def main():
 ###############################################################################
 
 def run_client_node():
+    global ORIGINATOR_CIPHER
+
     if args.verbose: print('[Status] Obtaining path...')
     path = get_path()
     path.append({'addr' : args.destination, 'key': 'DST_KEY'}) # TODO does dst have a key?
@@ -81,16 +83,16 @@ def run_client_node():
     t.start()
 
     # send first data onion 
-    msg = raw_input('Enter Message > ')
+#    msg = raw_input('Enter Message > ')
 
-    first_onion = encapsulate(path[3]['addr'], path[3]['key'], 
-                                msg, args.destination_port)
+#    first_onion = encapsulate(path[3]['addr'], path[3]['key'], 
+#                                msg, args.destination_port)
 
-    if args.verbose: print('[Data] First_onion: {}'.format(first_onion))
+#    if args.verbose: print('[Data] First_onion: {}'.format(first_onion))
     
     # TODO encrypt data
     
-    SENDER_SOCKET.sendall(json.dumps(first_onion).encode('utf-8'))
+#    SENDER_SOCKET.sendall(json.dumps(first_onion).encode('utf-8'))
     
     if args.verbose: print('[Status] Virtual Circuit UP')
 
@@ -98,8 +100,9 @@ def run_client_node():
         msg = raw_input('Enter Message > ')
             
         # TODO encrypt
+        onion = ORIGINATOR_CIPHER.create_onion(4, msg)
 
-        SENDER_SOCKET.sendall(msg.encode('utf-8'))
+        SENDER_SOCKET.sendall(onion.encode('utf-8'))
 
 
 def shut_down_client_node():
@@ -145,7 +148,7 @@ def setup_vc(path, conn):
     global ORIGINATOR_CIPHER
 
     # get ACK for remaining internal nodes
-    for i in range(1,3):
+    for i in range(1,4):
 #        setup_onion = encapsulate(path[i]['addr'], path[i]['key'], 
 #                                'SYN', args.onion_port)
         if i != 3: nextaddr = ORIGINATOR_CIPHER.path[i][0]

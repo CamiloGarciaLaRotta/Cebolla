@@ -62,7 +62,7 @@ class OriginatorSecurityEnforcer(object):
             machine = AESProdigy(self.directorySymKey, self.directoryGen.pseudo_random_data(16))
             ciphertext = machine.encrypt(ciphertext)
         else:
-            if depth > len(self.path):
+            if depth > len(self.path) + 1:
                 depth = len(self.path)
             for c in range(depth-2, -1, -1):
                 machine = AESProdigy(self.path[c][1], self.gens[c].pseudo_random_data(16))
