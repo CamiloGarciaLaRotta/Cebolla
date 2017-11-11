@@ -101,6 +101,9 @@ def get_path():
 
     dir_sock.sendall(socket.gethostname().encode('utf-8'))
 
+    pubkey = dir_sock.recv(6144).decode('utf-8').rstrip()
+    print('Directory\'s pubkey: ' + pubkey)
+
     data = dir_sock.recv(6144).decode('utf-8').rstrip()
     path = json.loads(data)
 

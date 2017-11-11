@@ -124,6 +124,10 @@ def handle_path_request(conn):
     data = conn.recv(1024).decode('utf-8').rstrip()
     if args.verbose: print('[Status] Recieved path request from {}'.format(data)) 
 
+    pubkey = KEYPAIR.get_public_key().exportKey()
+    conn.sendall(pubkey)
+    
+    data = conn.recv(1024).decode('utf-8').rstrip()
 
     path = random.sample(ROUTERS, 3)
     if args.verbose: print('[Status] Selected path: {}, {}, {}'
