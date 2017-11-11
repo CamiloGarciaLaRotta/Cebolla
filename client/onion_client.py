@@ -1,7 +1,7 @@
 import argparse             # for command-line argument parsing
+import json                 # for encoding data sent through TCP
 import random               # for random path selection
 import socket               # for TCP communication
-import json                 # for encoding data sent through TCP
 import threading            # for one thread per TCP connection
 
 
@@ -21,19 +21,20 @@ parser.add_argument("-v", "--verbose",
 
 args = parser.parse_args()
 
+# TODO disabled for testing purposes
 # validate args against conditions
-if args.onion_port < 5551 or args.onion_port > 5557: # 7 group members, each get a port
-    parser.error("port must satisfy: 5551 <= port <= 5557")
+#if args.onion_port < 5551 or args.onion_port > 5557: # 7 group members, each get a port
+#    parser.error("port must satisfy: 5551 <= port <= 5557")
 
 
 #   GLOBALS
 #################################################################################
 
-HOST = ''                            # empty string => all IPs of this machine
-PORT = args.onion_port               # port for server to send data onto, cli arg
+HOST = ''                            
+PORT = args.onion_port              
 SENDER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-DIRECTORY_NODE = 'cs-1'              # TODO hardcoded value or CL argument
+DIRECTORY_NODE = 'cs-1'            
 
 
 #   MAIN
@@ -56,7 +57,7 @@ def main():
 def run_client_node():
     if args.verbose: print('[Status] Obtaining path...')
     path = get_path()
-    path.append({'addr' : args.destination, 'key': 'DST_KEY'})
+    path.append({'addr' : args.destination, 'key': 'DST_KEY'}) # TODO does dst have a key?
     if args.verbose: print('[Status] Path: {}'.format(path))
 
     SENDER_SOCKET.connect((path[0]['addr'],PORT))
@@ -98,18 +99,16 @@ def get_path():
     dir_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dir_sock.connect((DIRECTORY_NODE,PORT))
 
-    # TODO define what to send because directory doesn't even care
     dir_sock.sendall(socket.gethostname().encode('utf-8'))
 
-    data = dir_sock.recv(1024).decode('utf-8').rstrip()
-
+    data = dir_sock.recv(6144).decode('utf-8').rstrip()
     path = json.loads(data)
 
     dir_sock.close()
 
     return path
 
-
+# send setup onions to all the nodes in path through the conn socket
 def setup_vc(path, conn):
     # get ACK from first node
     conn.sendall(b'SYN')
