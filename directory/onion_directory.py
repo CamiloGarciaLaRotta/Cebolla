@@ -3,10 +3,12 @@ import json                 # for encoding data sent through TCP
 import random               # for random path selection
 import socket               # for TCP communication
 import threading            # for one thread per TCP connection
+from Crypto.Random.Fortuna.FortunaGenerator import AESGenerator
 
 import sys, os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../stealth'))
 import stealth              # for communication encryption
+from stealth import AESProdigy
 
 
 #   CLI ARGS
@@ -127,15 +129,24 @@ def handle_path_request(conn):
     pubkey = KEYPAIR.get_public_key().exportKey()
     conn.sendall(pubkey)
     
-    data = conn.recv(1024).decode('utf-8').rstrip()
+    data = conn.recv(2048).decode('utf-8').rstrip()
+
+    symkey = KEYPAIR.decrypt(data)
+    if args.verbose: 
+        print('Received symkey: ' + symkey)
 
     path = random.sample(ROUTERS, 3)
     if args.verbose: print('[Status] Selected path: {}, {}, {}'
                             .format(path[0]['addr'],path[1]['addr'],path[2]['addr']))
+
+    rng = AESGenerator()
+    rng.reseed(symkey.encode('utf-8'))
+    aesmachine = AESProdigy(symkey, rng.pseudo_random_data(16))
     
     # TODO: encrypt message
+    ciphertext = aesmachine.encrypt(json.dumps(path))
     
-    conn.sendall(json.dumps(path).encode('utf-8'))
+    conn.sendall(ciphertext.encode('utf-8'))
 
     conn.close()
 
