@@ -116,10 +116,14 @@ def get_path():
 
     pubkey = dir_sock.recv(6144).decode('utf-8').rstrip()
     ORIGINATOR_CIPHER.directoryPubKey = RSAVirtuoso(RSA.importKey(pubkey))
-    dir_sock.sendall('get me a path')
+    msg = ORIGINATOR_CIPHER.create_symkey_msg(0, '', '')
+    if args.verbose:
+        print('Sending message: ' + msg)
+    dir_sock.sendall(msg.encode('utf-8'))
 
     data = dir_sock.recv(6144).decode('utf-8').rstrip()
-    path = json.loads(data)
+
+    path = json.loads(ORIGINATOR_CIPHER.decipher_response(0,data))
 
     dir_sock.close()
 

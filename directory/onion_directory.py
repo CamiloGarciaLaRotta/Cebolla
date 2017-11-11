@@ -131,17 +131,15 @@ def handle_path_request(conn):
     
     data = conn.recv(2048).decode('utf-8').rstrip()
 
-    symkey = KEYPAIR.decrypt(data)
-    if args.verbose: 
-        print('Received symkey: ' + symkey)
+    condata = KEYPAIR.extract_path_data(data)
 
     path = random.sample(ROUTERS, 3)
     if args.verbose: print('[Status] Selected path: {}, {}, {}'
                             .format(path[0]['addr'],path[1]['addr'],path[2]['addr']))
 
     rng = AESGenerator()
-    rng.reseed(symkey.encode('utf-8'))
-    aesmachine = AESProdigy(symkey, rng.pseudo_random_data(16))
+    rng.reseed(condata[0])
+    aesmachine = AESProdigy(condata[0], rng.pseudo_random_data(16))
     
     # TODO: encrypt message
     ciphertext = aesmachine.encrypt(json.dumps(path))

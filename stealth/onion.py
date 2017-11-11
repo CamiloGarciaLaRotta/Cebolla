@@ -70,7 +70,7 @@ class OriginatorSecurityEnforcer(object):
     # Ex, if passed through all onion nodes, depth=amount of nodes in path
     def decipher_response(self, depth, msg):
         if depth < 1:
-            machine = AESProdify(self.directorySymKey, self.directoryGen.pseudo_random_data(16))
+            machine = AESProdigy(self.directorySymKey, self.directoryGen.pseudo_random_data(16))
             msg = machine.decrypt(msg)
         else:
             for c in range(depth):
