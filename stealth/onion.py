@@ -15,6 +15,7 @@ MAX_MESSAGE_SIZE = 4096
 class OriginatorSecurityEnforcer(object):
     def __init__(self):
         self.path = []
+        self.gens = []
         self.directorySymKey = stealth.get_random_key(16)
         self.directoryGen = AESGenerator()
         self.directoryGen.reseed(self.directorySymKey)
