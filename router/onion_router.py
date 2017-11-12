@@ -88,7 +88,7 @@ def dir_setup():
             conn.sendall(resp.encode('utf-8'))
         else:
             if args.verbose: print('[Status] Ping from Directory')
-            
+
         conn.close()
 
 
@@ -111,7 +111,7 @@ def two_way_setup(back_conn):
     # parse onion to find out who to send to and what to send
     msg_dict = json.loads(msg)
     msg_addr = msg_dict["addr"]
-    msg_next = msg_dict["next"] 
+    msg_next = msg_dict["next"]
 
     port = int(msg_dict["port"]) if "port" in msg_dict else DEFAULT_NEXT_PORT
 
@@ -120,10 +120,10 @@ def two_way_setup(back_conn):
     if args.verbose: print('[Status] Connecting to next onion node...')
     forw_conn.connect((msg_addr, port))
     if args.verbose: print('[Status] Connected.')
-    
+
     if args.verbose: print('[Status] Sending: {} To: {}'.format(msg_next, msg_addr))
     forw_conn.sendall(msg_next.encode('utf-8'))
-    
+
     # now that two way communication is established, pass data back and forth forever
 
     t = threading.Thread(target=backward_transfer, args=(forw_conn, back_conn))
@@ -138,7 +138,7 @@ def two_way_setup(back_conn):
 def forward_transfer(back_conn, forw_conn):
     while True:
         msg = back_conn.recv(2048).decode('utf-8').rstrip()
-        
+
         if args.verbose: print('[Data] From back_conn: {}'.format(msg))
 
         # (TODO: decrypt)
