@@ -14,9 +14,7 @@ MAX_MESSAGE_SIZE = 4096
 
 class OriginatorSecurityEnforcer(object):
     def __init__(self):
-        circuit = dummy_get_onion_circuit()
         self.path = []
-#        self.onions = circuit[1]
         self.directorySymKey = stealth.get_random_key(16)
         self.directoryGen = AESGenerator()
         self.directoryGen.reseed(self.directorySymKey)
@@ -29,9 +27,6 @@ class OriginatorSecurityEnforcer(object):
         self.gens = [AESGenerator() for i in range(len(self.path))]
         for c in range(len(self.path)):
             self.gens[c].reseed(self.path[c][1])
-
-    def get_onions(self): # For testing before network only
-        return self.onions
 
     def get_path(self):
         return self.path
@@ -64,7 +59,7 @@ class OriginatorSecurityEnforcer(object):
         else:
             if depth > len(self.path) + 1:
                 depth = len(self.path)
-            for c in range(depth-2, -1, -1):
+            for c in range(depth-2, -1, -1): #Never want to encrypt the destination's message
                 machine = AESProdigy(self.path[c][1], self.gens[c].pseudo_random_data(16))
                 ciphertext = machine.encrypt(ciphertext)
         return ciphertext
