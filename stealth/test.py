@@ -49,6 +49,7 @@ class TestSymkeyCommunication(unittest.TestCase):
         addr = 'cs-1.cs.mcgill.ca'
         port = 5551
         originator = OriginatorSecurityEnforcer()
+        originator.path = [('blah', stealth.get_random_key(16), 5551) for c in range(0,1)]
         nodekey = RSAVirtuoso()
         originator.set_pubkeys([RSAVirtuoso(nodekey.key.publickey())])
         msg = originator.create_symkey_msg(1, addr, port)
@@ -60,25 +61,27 @@ class TestDataCommunication(unittest.TestCase):
     def test_basic_data_message(self):
         message = 'Hello, Newman'
         originator = OriginatorSecurityEnforcer()
+        originator.set_path([{'addr': 'blah', 'port': 5551, 'key': stealth.get_random_key(16)}])
         node = OnionNodeSecurityEnforcer()
         nodekey = RSAVirtuoso()
         originator.set_pubkeys([RSAVirtuoso(nodekey.key.publickey())])
         msg = originator.create_symkey_msg(1, 'cs-1.cs.mcgill.ca', 5551)
         data = nodekey.extract_path_data(msg)
         node.set_key(data[0])
-        ciphertext = originator.create_onion(1, message)
+        ciphertext = originator.create_onion(2, message)
         msg = node.peel_layer(ciphertext)
         self.assertEqual(msg, message)
 
-    def test_basic_message_retrieval(self):
-        message = 'Hello, Newman'
-        originator = OriginatorSecurityEnforcer()
-        nodes = originator.get_onions()
-        cipher = message
-        for c in range(len(nodes)-1, -1, -1):
-            cipher = nodes[c].add_layer(cipher)
-        retrieved = originator.decipher_response(len(nodes), cipher)
-        self.assertEqual(message, retrieved)
+# Obsolete now that crypto works over the network
+#    def test_basic_message_retrieval(self):
+#        message = 'Hello, Newman'
+#        originator = OriginatorSecurityEnforcer()
+#        nodes = originator.get_onions()
+#        cipher = message
+#        for c in range(len(nodes)-1, -1, -1):
+#            cipher = nodes[c].add_layer(cipher)
+#        retrieved = originator.decipher_response(len(nodes), cipher)
+#        self.assertEqual(message, retrieved)
 
 #Obsolete, for now
 #class TestEstablishment(unittest.TestCase):

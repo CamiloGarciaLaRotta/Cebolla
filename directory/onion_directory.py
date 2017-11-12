@@ -3,10 +3,12 @@ import json                 # for encoding data sent through TCP
 import random               # for random path selection
 import socket               # for TCP communication
 import threading            # for one thread per TCP connection
+from Crypto.Random.Fortuna.FortunaGenerator import AESGenerator
 
 import sys, os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../stealth'))
 import stealth              # for communication encryption
+from stealth import AESProdigy
 
 
 #   CLI ARGS
@@ -61,7 +63,12 @@ def main():
     nodes = ['lab2-{}'.format(i) for i in range(1, MAX_NODES+1)]
     up_nodes = list( filter(ping_node, nodes) ) 
     nodes_keys = zip(up_nodes, map(get_node_pubkey, up_nodes))
-    ROUTERS = [{'addr':x[0], 'key':x[1]} for x in nodes_keys]
+    ROUTERS = [{'addr':x[0], 'key':x[1], 'port': PORT} for x in nodes_keys]
+
+    if len(ROUTERS) < 3:
+        print('[Status] Not enough onion nodes running in network')
+        print('[Error] Directory DOWN')
+        sys.exit(1)
 
     if args.verbose: print('[Status] Directory UP')
     try:
@@ -124,14 +131,23 @@ def handle_path_request(conn):
     data = conn.recv(1024).decode('utf-8').rstrip()
     if args.verbose: print('[Status] Recieved path request from {}'.format(data)) 
 
+    pubkey = KEYPAIR.get_public_key().exportKey()
+    conn.sendall(pubkey)
+    
+    data = conn.recv(2048).decode('utf-8').rstrip()
+
+    condata = KEYPAIR.extract_path_data(data)
 
     path = random.sample(ROUTERS, 3)
     if args.verbose: print('[Status] Selected path: {}, {}, {}'
                             .format(path[0]['addr'],path[1]['addr'],path[2]['addr']))
+
+    rng = AESGenerator()
+    rng.reseed(condata[0])
+    aesmachine = AESProdigy(condata[0], rng.pseudo_random_data(16))
+    ciphertext = aesmachine.encrypt(json.dumps(path))
     
-    # TODO: encrypt message
-    
-    conn.sendall(json.dumps(path).encode('utf-8'))
+    conn.sendall(ciphertext.encode('utf-8'))
 
     conn.close()
 

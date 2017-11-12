@@ -14,20 +14,20 @@ MAX_MESSAGE_SIZE = 4096
 
 class OriginatorSecurityEnforcer(object):
     def __init__(self):
-        circuit = dummy_get_onion_circuit()
-        self.path = circuit[0]
-        self.onions = circuit[1]
-        self.gens = [AESGenerator() for i in range(len(self.path))]
+        self.path = []
+        self.gens = []
         self.directorySymKey = stealth.get_random_key(16)
         self.directoryGen = AESGenerator()
         self.directoryGen.reseed(self.directorySymKey)
         self.directoryPubKey = None
-        for c in range(len(self.path)):
-            self.gens[c].reseed(self.path[c][1])
         self.pubkeys = []
 
-    def get_onions(self): # For testing before network only
-        return self.onions
+    def set_path(self, pathdata):
+        for c in pathdata:
+            self.path.append((c["addr"], stealth.get_random_key(16), c["key"]))
+        self.gens = [AESGenerator() for i in range(len(self.path))]
+        for c in range(len(self.path)):
+            self.gens[c].reseed(self.path[c][1])
 
     def get_path(self):
         return self.path
@@ -54,13 +54,13 @@ class OriginatorSecurityEnforcer(object):
     # Set depth=0 if talking to the directory node, depth=1 for the first node in the path...etc
     def create_onion(self, depth, msg):
         ciphertext = msg
-        if depth < 1:
+        if depth == 0:
             machine = AESProdigy(self.directorySymKey, self.directoryGen.pseudo_random_data(16))
             ciphertext = machine.encrypt(ciphertext)
         else:
-            if depth > len(self.path):
+            if depth > len(self.path) + 1:
                 depth = len(self.path)
-            for c in range(depth-1, -1, -1):
+            for c in range(depth-2, -1, -1): #Never want to encrypt the destination's message
                 machine = AESProdigy(self.path[c][1], self.gens[c].pseudo_random_data(16))
                 ciphertext = machine.encrypt(ciphertext)
         return ciphertext
@@ -70,7 +70,7 @@ class OriginatorSecurityEnforcer(object):
     # Ex, if passed through all onion nodes, depth=amount of nodes in path
     def decipher_response(self, depth, msg):
         if depth < 1:
-            machine = AESProdify(self.directorySymKey, self.directoryGen.pseudo_random_data(16))
+            machine = AESProdigy(self.directorySymKey, self.directoryGen.pseudo_random_data(16))
             msg = machine.decrypt(msg)
         else:
             for c in range(depth):
