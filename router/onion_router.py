@@ -97,8 +97,6 @@ def dir_setup():
 
 # establish virtual circuit with 2 connection threads: backwards node and forward node
 def two_way_setup(back_conn):
-    global ONION_CIPHER
-
     # Wait for first contact
     # First message will contain (symkey, addr of next node, port of next node)
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
@@ -132,7 +130,6 @@ def two_way_setup(back_conn):
 ########################################################
 
 def forward_transfer(back_conn, forw_conn):
-    global ONION_CIPHER
     while True:
         msg = back_conn.recv(2048).decode('utf-8').rstrip()
         

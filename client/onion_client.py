@@ -68,8 +68,6 @@ def main():
 ###############################################################################
 
 def run_client_node():
-    global ORIGINATOR_CIPHER
-
     if args.verbose: print('[Status] Obtaining path...')
     path = get_path()
     if args.destination_port:
@@ -90,20 +88,18 @@ def run_client_node():
     if args.verbose: print('[Status] Virtual Circuit UP')
 
     while True:
-        msg = raw_input('Enter Message > ')
+        msg = raw_input('\nEnter Message > ')
         onion = ORIGINATOR_CIPHER.create_onion(4, msg)
         SENDER_SOCKET.sendall(onion.encode('utf-8'))
         #Wait for a short period for a response. 
         #Looks nicer to see the response before the next prompt.
-        time.sleep(0.5) 
+        time.sleep(0.3) 
 
 def shut_down_client_node():
     SENDER_SOCKET.close()
 
 
 def get_path():
-    global ORIGINATOR_CIPHER
-
     dir_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dir_sock.connect((DIRECTORY_NODE,PORT))
 
@@ -132,8 +128,6 @@ def get_path():
 
 # send setup onions to all the nodes in path through the conn socket
 def setup_vc(path, conn):
-    global ORIGINATOR_CIPHER
-
     #i represents depth, the amount of nodes deep into the path the dest is
     for i in range(1,4):
         if i != 3: nextaddr = ORIGINATOR_CIPHER.path[i][0]
@@ -156,7 +150,7 @@ def handle_response(conn):
         msg = conn.recv(2048).decode('utf-8').rstrip()
 
         msg = ORIGINATOR_CIPHER.decipher_response(3, msg) #Depth is 3 because all 3 onion nodes encrypted
-        print('\nReply from {}: {}'.format(args.destination, msg))
+        print('Reply from {}: {}'.format(args.destination, msg))
 
 
 #   RUN MAIN
