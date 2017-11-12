@@ -6,7 +6,7 @@ import socket           # for TCP communication
 import sys, os.path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../stealth'))
 import stealth          # for communication encryption
-import onion
+import onion            # for handling layer peeling and onion-level security
 from onion import OnionNodeSecurityEnforcer
 
 
@@ -99,42 +99,29 @@ def dir_setup():
 def two_way_setup(back_conn):
     global ONION_CIPHER
 
-    # TODO need to establish symkey with back_conn, connect to forw_conn
+    # Wait for first contact
+    # First message will contain (symkey, addr of next node, port of next node)
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
     if args.verbose: print('[Status] received estab: ' + msg)
-
-    # (TODO:decrypt data, initialize+respond with symkey. for now send 'ACK')
-    pathdata = KEYPAIR.extract_path_data(msg)
+    pathdata = KEYPAIR.extract_path_data(msg) # Gets the (symkey, addr, port) tuple
     ONION_CIPHER.set_key(pathdata[0])
     back_conn.sendall("ACK".encode('utf-8'))
 
-    # Wait for first-ever onion from back_conn
-#    if args.verbose: print('[Status] Waiting for first data onion...')
+    # Wait for next message to connect with the next node
+    # Wait is necessary because we still don't have the (symkey, addr, port) to give to the next node
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
-#    if args.verbose: print('[Status] First data onion: {}'.format(msg))
-
-    # (TODO:decrypt)
     if args.verbose: print('[Status] received next: ' + msg)
-    msg = ONION_CIPHER.peel_layer(msg)
+    msg = ONION_CIPHER.peel_layer(msg) #Peel off layer of encryption. Under this is the pubkey encrypted tuple
 
-    # parse onion to find out who to send to and what to send
-#    msg_dict = json.loads(msg)
-#    msg_addr = msg_dict["addr"]
-#    msg_next = msg_dict["next"] 
-
-#    port = int(msg_dict["port"]) if "port" in msg_dict else DEFAULT_NEXT_PORT
-
-    # connect to forw_conn and pass along data from back_conn
+    # Now that we have the pubkey-encrypted (symkey, addr, tuple), we can encrypt to forw_conn and send it
     forw_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if args.verbose: print('[Status] Trying to connect to {} on port {}...'.format(pathdata[1], pathdata[2]))
     forw_conn.connect((pathdata[1], pathdata[2]))
     if args.verbose: print('[Status] Connected.')
-    
     if args.verbose: print('[Status] Sending: {} To: {}'.format(msg, pathdata[1]))
     forw_conn.sendall(msg.encode('utf-8'))
     
-    # now that two way communication is established, pass data back and forth forever
-
+    # Now that two way communication is established, pass data back and forth forever
     t = threading.Thread(target=backward_transfer, args=(forw_conn, back_conn))
     t.setDaemon(True)
     t.start()
@@ -151,8 +138,6 @@ def forward_transfer(back_conn, forw_conn):
         
         if args.verbose: print('[Data] From back_conn: {}'.format(msg))
 
-        # (TODO: decrypt)
-
         # pass it on
         forw_conn.sendall(ONION_CIPHER.peel_layer(msg).encode('utf-8'))
 
@@ -162,7 +147,6 @@ def backward_transfer(forw_conn, back_conn):
         msg = forw_conn.recv(2048).decode('utf-8').rstrip()
 
         if args.verbose: print('[Data] From fwd_conn: {}'.format(msg))
-        # (TODO: encrypt)
         msg = ONION_CIPHER.add_layer(msg)
 
         # pass it on

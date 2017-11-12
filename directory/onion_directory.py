@@ -65,6 +65,11 @@ def main():
     nodes_keys = zip(up_nodes, map(get_node_pubkey, up_nodes))
     ROUTERS = [{'addr':x[0], 'key':x[1], 'port': PORT} for x in nodes_keys]
 
+    if len(ROUTERS) < 3:
+        print('[Status] Not enough onion nodes running in network')
+        print('[Error] Directory DOWN')
+        sys.exit(1)
+
     if args.verbose: print('[Status] Directory UP')
     try:
         run_directory_node()
@@ -140,8 +145,6 @@ def handle_path_request(conn):
     rng = AESGenerator()
     rng.reseed(condata[0])
     aesmachine = AESProdigy(condata[0], rng.pseudo_random_data(16))
-    
-    # TODO: encrypt message
     ciphertext = aesmachine.encrypt(json.dumps(path))
     
     conn.sendall(ciphertext.encode('utf-8'))
