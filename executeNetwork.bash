@@ -2,7 +2,7 @@
 
 #input 
 #	$1: The number of path nodes: MUST BE THE SAME AS THE INTITIALIZE SCRIPT
-#	$2: The CS path to host the client (i.e. cs-6.cs.mcgill.ca) 
+#	$2: The CS path to the destination  (i.e. cs-6.cs.mcgill.ca) 
 #	$3: Port # for regular data communication
 #	$4: Port used for pubkey
 #	$5: Port for dumydest and client
