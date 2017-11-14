@@ -15,21 +15,17 @@ import stealth              # for communication encryption
 # define cli positional args
 parser = argparse.ArgumentParser() 
 
+# positional args
 parser.add_argument("max_nodes", help="Quantity of nodes in network", type=int)
 parser.add_argument("port", help="Port to listen on for path requests", type=int)
-parser.add_argument("dir_port", 
-                    help="Port that routers will listen for Directory", type=int)
-parser.add_argument("-v", "--verbose",
-                    help="level of logging verbose", action="store_true")
+parser.add_argument("dir_port", help="Port that routers will listen for Directory", type=int)
+parser.add_argument("-v", "--verbose", help="level of logging verbose", action="store_true")
 
 args = parser.parse_args() # parse the args
 
 # validate args against conditions
 if args.max_nodes > 50 or args.max_nodes < 1: # no more than 50 nodes
     parser.error("max_nodes must satisfy: 1 <= max_nodes <= 50")
-# TODO disabled to a facilitate testing
-#if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
-#    parser.error("port must satisfy: 5551 <= port <= 5557")
 
 
 #   GLOBALS
