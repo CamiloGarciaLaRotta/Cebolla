@@ -13,28 +13,29 @@ read -r -d '' helpstring << DOC
 deploy_directory.sh usage:
 
 deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port>
- @param  user         the username to be used to login to the remote host
- @param  dirCebolla   the path to the dirCebolla directory on the remote host
+ @param  user         login username on remote host
+ @param  dirCebolla   path to root directory of Cebolla project on remote host
  @option branch       if given, the github branch version to use, else use local version
  @param  port         the port number for the directory node to listen on. 5551 <= port <= 5557
+ @param  orkr_port    port number on which to ask onion routers for keys
 
 What it does:
  1. login to cs-1.cs.mcgill.ca
  2. cd to Cebolla directory
  3. if branchname arg given, checkout and pull branch. else, scp local copy
- 4. run directory.py on the specified port to start up the directory node server
+ 4. run directory.py passing port and orkr_port as args
 DOC
-
 
 
 #      ARGUMENT PARSING
 ################################
 
-user=""       # username on remote host
-dirCebolla="" # the path to the root of the Cebolla directory
-branch=       # the git branch to checkout on remote host
-port=""       # the port to configure the server to listen on
-while getopts "u:d:b:p:" opt
+user=""
+dirCebolla=""
+branch=
+port=""
+orkr_port=""
+while getopts "u:d:b:p:o:" opt
 do
     case "$opt" in
         u)
@@ -49,6 +50,9 @@ do
         p)
             port="$OPTARG"
             ;;
+        o)
+            orkr_port="$OPTARG"
+            ;;
     esac
 done
 
@@ -58,11 +62,9 @@ done
 ################################
 
 if  # dont have 6 or 8 args
-    [ "$#" -ne "8" ] && [ "$#" -ne "6" ] ||
+    [ "#$" -ne 10 ] && [ "$#" -ne "8" ] ||
     # didn't pass args correctly
-    [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ] ||
-    # port out of range
-    [ "$port" -lt "5551" ] || [ "$port" -gt "5557" ] # 7 group members, 7 ports
+    [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ] || [ -z "$orkr_port" ] ||
 then
     echo -e "$helpstring"
     exit 1
@@ -78,15 +80,15 @@ if [ -z "$branch" ]
 then # use local version
     scp "directory.py" "$user"@"$servername":"$dirCebolla/directory/directory.py"
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
-		cd $dirCebolla
-		nohup python3 directory/directory.py 50 $port > /dev/null 2>&1 &
+		cd "$dirCebolla"
+		nohup python3 directory/directory.py 50 $port $orkr_port > /dev/null 2>&1 &
 		exit
 		DOC
 else # use version on github branch
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
         cd $dirCebolla
 		git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
-		nohup python3 directory/directory.py 50 $port > /dev/null 2>&1 &
+		nohup python3 directory/directory.py 50 $port $orkr_port > /dev/null 2>&1 &
 		exit
 		DOC
 fi
