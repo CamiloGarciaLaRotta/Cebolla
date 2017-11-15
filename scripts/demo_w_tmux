@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+
+# Setup a tmux window with a bunch of panes.
+# - one pane for the originator
+# - one pane for the destination
+# - one pane for the directory
+# - three panes for the three onion nodes.  Note that this
+#   script only deploys+runs THREE onion nodes!
+
+
+if [ -z "$1" ]
+then
+    echo "Need one arg: username on mcgill machines"
+    exit 1
+else
+    user="$1"
+fi
+
+
+# setup some panes for convenience
+tmux split-window -h
+
+sleep 0.1
+
+tmux send-keys -t 0 "tmux split-window -v; clear" C-m
+
+sleep 0.1
+
+tmux send-keys -t 1 "tmux split-window -v; clear" C-m
+
+sleep 0.1
+
+tmux send-keys -t 1 "tmux split-window -v; clear" C-m
+
+sleep 0.1
+
+tmux send-keys -t 3 "tmux split-window -v; clear" C-m
+
+# At this point we have a tmux window with the following panes
+#__________________________________________________________
+#                            |               1             |
+#                            |                             |
+#             0              |-----------------------------|
+#                            |               4             |
+#                            |                             |
+#----------------------------|-----------------------------|
+#                            |               3             |
+#                            |                             |
+#             2              |-----------------------------|
+#                            |               5             |
+#                            |                             |
+# ---------------------------------------------------------
+
+# pane 0 will be for the originator
+# pane 2 will be for the destination
+
+# pane 1 will be for the directory
+# pane 4 will be for onion node 1
+# pane 3 will be for onion node 2
+# pane 5 will be for onion node 3
+
+# ssh into the appropriate mcgill machine for each pane
+#tmux send-keys -t 0 "ssh $user@cs-10.cs.mcgill.ca" C-m
+#tmux send-keys -t 2 "ssh $user@cs-2.cs.mcgill.ca" C-m
+#tmux send-keys -t 1 "ssh $user@cs-1.cs.mcgill.ca" C-m
+
+#tmux send-keys -t 4 "ssh $user@lab2-1.cs.mcgill.ca" C-m
+#tmux send-keys -t 3 "ssh $user@lab2-2.cs.mcgill.ca" C-m; sleep 0.1
+#tmux send-keys -t 5 "ssh $user@lab2-3.cs.mcgill.ca" C-m
+
+## set the PS1 to something useful for each pane
+#tmux send-keys -t 0 "PS1=\"ORIGINATOR> \"; clear" C-m
+#tmux send-keys -t 2 "PS1=\"DESTINATION> \"; clear" C-m
+
+#tmux send-keys -t 1 "PS1=\"DIRECTORY> \"; clear" C-m
+#tmux send-keys -t 4 "PS1=\"NODE 1> \"; clear" C-m
+#tmux send-keys -t 3 "PS1=\"NODE 2> \"; clear" C-m
+#tmux send-keys -t 5 "PS1=\"NODE 3> \"; clear" C-m
