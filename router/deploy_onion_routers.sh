@@ -25,11 +25,12 @@ deploy_onion_routers.sh -m maxNodes -u <user> -d <dirCebolla> [-b <branch>] [-p 
                       if both port and okrPort are given, run after deploy. else just deploy
 
 What it does:
-for i in [1 ... maxNodes]
- 1. login to lab2-i.cs.mcgill.ca
+ 1. login to cs-1.cs.mcgill.ca
  2. cd to Cebolla directory
  3. if branchname arg given, checkout and pull branch. else, scp local copy
- 4. if port and okrPort given, run onion_router.py with params port and okrPort
+for i in [1 ... maxNodes]
+ 4. login to lab2-i.cs.mcgill.ca
+ 5. if port and okrPort given, run onion_router.py with params port and okrPort
 endfor
 
 *note that ^C will go to the next iteration of the loop
@@ -92,30 +93,28 @@ fi
 
 trap 'continue' SIGINT # ^C goes to next iteration of loop below
 
-routerNodeCmd=""
-if [ -n "$port" ] && [ -n "$okrPort" ]
-then
-    routerNodeCmd="nohup python3 onion_router/onion_router.py $port $okrPort > /dev/null 2>&1 &"
+servername="cs-1.cs.mcgill.ca"
+if [ -z "$branch" ]
+then # deploy local version
+    scp  "onion_router.py" "$user"@"$servername":"$dirCebolla/onion_router/onion_router.py"
+else # deploy version on github branch
+    ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
+		cd $dirCebolla
+		git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
+		DOC
 fi
 
-for i in $(seq 1 "$maxNodes")
-do
+if  # if both port arguments given
+    [ -n "$port" ] && [ -n "$okrPort" ]
+then
     servername="lab2-$i.cs.mcgill.ca"
-    if [ -z "$branch" ]
-    then # use local version
-        echo "sending local onion_router.py to $servername to run on port $port"
-        scp  "onion_router.py" "$user"@"$servername":"$dirCebolla/onion_router/onion_router.py"
+    routerNodeCmd="nohup python3 onion_router/onion_router.py $port $okrPort > /dev/null 2>&1 &"
+    for i in $(seq 1 "$maxNodes")
+    do
         ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
 			cd $dirCebolla
 			$routerNodeCmd
 			exit
 			DOC
-    else # use version on github branch
-        ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
-			cd $dirCebolla
-			git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
-			$routerNodeCmd
-			exit
-			DOC
-    fi
-done
+    done
+fi
