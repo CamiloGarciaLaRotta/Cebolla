@@ -12,7 +12,7 @@ cd "$THIS_DIR"
 read -r -d '' helpstring <<DOC
 deploy_onion_routers.sh usage:
 
-deploy_onion_routers.sh -m maxNodes -u <user> -d <dirCebolla> [-b <branch>] [-p <port> -o <okrPort>]
+deploy_onion_routers.sh -m maxNodes -u user -d dirCebolla [-b branch] [-p port -o okrPort]
 
  @param  maxNodes     the number of onion router nodes to set up. 1 <= maxNodes <= 50
  @param  user         the username to be used to login to the remote host
@@ -65,7 +65,8 @@ do
         p)
             port="$OPTARG"
             ;;
-        o)  okrPort="$OPTARG"
+        o)
+            okrPort="$OPTARG"
             ;;
     esac
 done
@@ -93,10 +94,11 @@ fi
 
 trap 'continue' SIGINT # ^C goes to next iteration of loop below
 
+# deploy onion_router.py
 servername="cs-1.cs.mcgill.ca"
 if [ -z "$branch" ]
 then # deploy local version
-    scp  "onion_router.py" "$user"@"$servername":"$dirCebolla/onion_router/onion_router.py"
+    scp  "onion_router.py" "$user"@"$servername":"$dirCebolla/router/onion_router.py"
 else # deploy version on github branch
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
 		cd $dirCebolla
@@ -105,13 +107,14 @@ else # deploy version on github branch
 		DOC
 fi
 
+# run onion_router.py
 if  # if both port arguments given
     [ -n "$port" ] && [ -n "$okrPort" ]
 then
-    servername="lab2-$i.cs.mcgill.ca"
-    routerNodeCmd="nohup python3 onion_router/onion_router.py $port $okrPort > /dev/null 2>&1 &"
+    routerNodeCmd="nohup python3 router/onion_router.py $port $okrPort > /dev/null 2>&1 &"
     for i in $(seq 1 "$maxNodes")
     do
+        servername="lab2-$i.cs.mcgill.ca"
         ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
 			cd $dirCebolla
 			$routerNodeCmd
