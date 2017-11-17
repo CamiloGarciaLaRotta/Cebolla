@@ -36,16 +36,13 @@ if args.max_nodes > 50 or args.max_nodes < 1: # no more than 50 nodes
 
 KEYPAIR = stealth.RSAVirtuoso()
 
-# max number of routers in onion network
-MAX_NODES = args.max_nodes
-
 # list of onion routers
-NODES = ['lab2-{}'.format(i) for i in range(1, MAX_NODES+1)]
+NODES = ['lab2-{}'.format(i) for i in range(1, args.max_nodes + 1)]
 
 # a socket for path requests from originators
 LISTEN_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 LISTEN_SOCKET.bind(("", args.port))
-LISTEN_SOCKET.listen(MAX_NODES)
+LISTEN_SOCKET.listen(args.max_nodes)
 
 
 #   MAIN
@@ -56,7 +53,7 @@ def main():
 
     if args.verbose: print('[Status] Querying network NODES...')
 
-    NODES     = filter(ping_node, NODES)
+    NODES = filter(ping_node, NODES)
     node_keys = map(get_node_pubkey, NODES)
     NODES = [{'addr':a, 'key':k, 'port':args.port} for a,k in zip(NODES, node_keys)]
 
@@ -81,6 +78,7 @@ def main():
 def ping_node(node):
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(0.5) # do not wait more than half second to connect
     exit_code = s.connect_ex((node,args.dir_port))
     s.close()
 
@@ -135,8 +133,8 @@ def handle_path_request(conn):
     condata = KEYPAIR.extract_path_data(data)
 
     path = random.sample(ROUTERS, 3)
-    if args.verbose: print('[Status] Selected path: {}, {}, {}'
-                            .format(path[0]['addr'],path[1]['addr'],path[2]['addr']))
+    if args.verbose:
+        print('[Status] Selected path: {}, {}, {}'.format(*[path[i]['addr'] for i in range(3)])
 
     rng = AESGenerator()
     rng.reseed(condata[0])

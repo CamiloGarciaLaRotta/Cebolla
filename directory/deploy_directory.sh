@@ -11,19 +11,22 @@ cd "$THIS_DIR"
 read -r -d '' helpstring << DOC
 deploy_directory.sh usage:
 
-deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port> -o <okrPort> [-v]
- @param  user         the username to be used to login to the remote host
- @param  dirCebolla   the path to the dirCebolla directory on the remote host
- @option branch       if given, the github branch version to use, else use local version
- @param  port         the port number for the directory node to listen on. 5551 <= port <= 5557
- @param  okrPort      the port number that onion routers listen on for key requests
- @flag   v            if given, run the directory node in verbose mode
+deploy_directory -u <user> -d <dirCebolla> [-b <branch>] [-p <port> -o <okrPort>]
+
+ user         login username on remote host
+ dirCebolla   path to Cebolla directory on remote host
+
+ [branch]     if given, deploy version from github branch, else deploy local version
+
+ [port]       port for directory node to listen on
+ [okrPort]    port for onion routers to listen on for key requests
+              if both port and okrPort given, run after deploy.  else just deploy
 
 What it does:
  1. login to cs-1.cs.mcgill.ca
  2. cd to Cebolla directory
  3. if branchname arg given, checkout and pull branch. else, scp local copy
- 4. run directory.py passing @param port and @param okrPort
+ 4. if port and okrPort given run directory.py with params port and okrPort
 DOC
 
 
@@ -36,7 +39,6 @@ dirCebolla="" # the path to the root of the Cebolla directory
 branch=       # the git branch to checkout on remote host
 port=""       # the port to configure the server to listen on
 okrPort=""    # onion routers respond to pubkey requests on this port
-verbose=""
 while getopts "u:d:b:p:o:v" opt
 do
     case "$opt" in
@@ -55,9 +57,6 @@ do
         o)
             okrPort="$OPTARG"
             ;;
-        v)
-            verbose="-v"
-            ;;
     esac
 done
 
@@ -66,34 +65,41 @@ done
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
-if  # didn't pass args correctly
-    [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ] || [ -z "$okrPort" ] ||
-    # port out of range
-    [ "$port" -lt "5551" ] || [ "$port" -gt "5557" ] # 7 group members, 7 ports
+if  # didn't pass required args correctly
+    [ -z "$user" ] || [ -z "$dirCebolla" ] ||
+    # didn't pass optional args correctly [ -z "$port" ] xor [ -z "$okrPort" ]
+    [ -z "$port" ] && [ -n "$okrPort" ] || [ -n "$port" ] && [ -z "$okrPort" ]
 then
     echo -e "$helpstring"
     exit 1
 fi
 
 
-
 #     UPDATE AND RUN DIRECTORY.PY ON THE REMOTE
 ####################################################
 
+
+dirNodeCmd=""
+if [ -n "$port" ] && [ -n "$okrPort" ]
+then
+    dirNodeCmd="nohup python3 directory/onion_directory.py 50 $port $okrPort > /dev/null 2>&1 &"
+fi
+
 servername="cs-1.cs.mcgill.ca"
+
 if [ -z "$branch" ]
 then # use local version
     scp "onion_directory.py" "$user"@"$servername":"$dirCebolla/directory/onion_directory.py"
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
 		cd $dirCebolla
-		nohup python3 directory/onion_directory.py 50 $port $okrPort $verbose > /dev/null 2>&1 &
+		$dirNodeCmd
 		exit
 		DOC
 else # use version on github branch
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
-        cd $dirCebolla
+		cd $dirCebolla
 		git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
-		nohup python3 directory/onion_directory.py 50 $port $okrPort $verbose > /dev/null 2>&1 &
+		$dirNodeCmd
 		exit
 		DOC
 fi
