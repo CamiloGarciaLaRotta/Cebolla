@@ -68,7 +68,7 @@ servername="cs-10.cs.mcgill.ca"
 
 if [ -z "$branch" ]
 then # use local version
-    scp "onion_directory.py" "$user"@"$servername":"$dirCebolla/directory/onion_directory.py"
+    scp "onion_client.py" "$user"@"$servername":"$dirCebolla/client/onion_client.py"
 else # use version on github branch
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
 		cd $dirCebolla
