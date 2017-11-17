@@ -20,7 +20,7 @@ deploy_directory -u <user> -d <dirCebolla> [-b <branch>] [-p <port> -o <okrPort>
 
  [port]       port for directory node to listen on
  [okrPort]    port for onion routers to listen on for key requests
-              if both port and okrPort given, run after deploy.  else just deploy
+              if both port and okrPort given, run after deploy. else just deploy
 
 What it does:
  1. login to cs-1.cs.mcgill.ca
@@ -39,7 +39,7 @@ dirCebolla="" # the path to the root of the Cebolla directory
 branch=       # the git branch to checkout on remote host
 port=""       # the port to configure the server to listen on
 okrPort=""    # onion routers respond to pubkey requests on this port
-while getopts "u:d:b:p:o:v" opt
+while getopts "u:d:b:p:o:" opt
 do
     case "$opt" in
         u)
