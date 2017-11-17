@@ -60,7 +60,7 @@ done
 ################################
 
 if  # didn't pass required args correctly
-    [ -z "$user" ] || [ -z "$dirCebolla" ] ||
+    [ -z "$user" ] || [ -z "$dirCebolla" ]
 then
     echo -e "$helpstring"
     exit 1
@@ -74,14 +74,14 @@ fi
 dummyDestCmd=""
 if [ -n "$port" ]
 then
-    dummyDestCmd="nohup python3 dummy_dest/dummy_dest.py $port > /dev/null 2>&1 &"
+    dummyDestCmd="nohup python3 destination/dummy_dest.py $port > /dev/null 2>&1 &"
 fi
 
 servername="cs-2.cs.mcgill.ca"
 
 if [ -z "$branch" ]
 then # use local version
-    scp  "dummy_dest.py" "$user"@"$servername":"$dirCebolla/dummy_dest/dummy_dest.py"
+    scp  "dummy_dest.py" "$user"@"$servername":"$dirCebolla/destination/dummy_dest.py"
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
 		cd $dirCebolla
 		$dummyDestCmd
