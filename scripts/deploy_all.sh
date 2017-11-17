@@ -9,10 +9,11 @@ cd "$THIS_DIR"
 ################################
 
 read -r -d '' helpstring << DOC
-deploy_directory.sh usage:
+deploy_all.sh usage:
 
-deploy_directory -u user -d dirCebolla [-b branch] [-p port -o okrPort]
+deploy_all.sh -m maxNodes -u user -d dirCebolla [-b branch] [-p port -o okrPort]
 
+ maxNodes     the number of nodes to setup in the onion network
  user         login username on remote host
  dirCebolla   path to Cebolla directory on remote host
 
@@ -23,24 +24,26 @@ deploy_directory -u user -d dirCebolla [-b branch] [-p port -o okrPort]
               if both port and okrPort given, run after deploy. else just deploy
 
 What it does:
- 1. login to cs-1.cs.mcgill.ca
- 2. cd to Cebolla directory
- 3. if branchname arg given, checkout and pull branch. else, scp local copy
- 4. if port and okrPort given run directory.py with params port and okrPort
+TODO TODO TODO
 DOC
+
 
 
 #      ARGUMENT PARSING
 ################################
 
+maxNodes=""   # the number of onion router nodes to set up
 user=""       # username on remote host
 dirCebolla="" # the path to the root of the Cebolla directory
 branch=       # the git branch to checkout on remote host
 port=""       # the port to configure the server to listen on
 okrPort=""    # onion routers respond to pubkey requests on this port
-while getopts "u:d:b:p:o:" opt
+while getopts "m:u:d:b:p:o:" opt
 do
     case "$opt" in
+        m)
+            maxNodes="$OPTARG"
+            ;;
         u)
             user="$OPTARG"
             ;;
@@ -60,44 +63,40 @@ do
 done
 
 
+
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
 if  # didn't pass optional args correctly [ -z "$port" ] xor [ -z "$okrPort" ]
     [ -z "$port" ] && [ -n "$okrPort" ] || [ -n "$port" ] && [ -z "$okrPort" ] ||
     # didn't pass required args correctly
-    [ -z "$user" ] || [ -z "$dirCebolla" ]
+    [ -z "$maxNodes" ] || [ -z "$user" ] || [ -z "$dirCebolla" ]
 then
     echo -e "$helpstring"
     exit 1
 fi
 
+maxNodes="-m $maxNodes"
+user="-u $user"
+dirCebolla="-d $dirCebolla"
 
-#     UPDATE AND RUN DIRECTORY.PY ON THE REMOTE
-####################################################
-
-
-dirNodeCmd=""
 if [ -n "$port" ] && [ -n "$okrPort" ]
 then
-    dirNodeCmd="nohup python3 directory/onion_directory.py 50 $port $okrPort > /dev/null 2>&1 &"
+    port="-p $port"
+    okrPort="-o $okrPort"
 fi
 
-servername="cs-1.cs.mcgill.ca"
-
-if [ -z "$branch" ]
-then # use local version
-    scp "onion_directory.py" "$user"@"$servername":"$dirCebolla/directory/onion_directory.py"
-    ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
-		cd $dirCebolla
-		$dirNodeCmd
-		exit
-		DOC
-else # use version on github branch
-    ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
-		cd $dirCebolla
-		git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
-		$dirNodeCmd
-		exit
-		DOC
+if [ -n "$branch" ]
+then
+    branch="-b $branch"
 fi
+
+
+#   DEPLOY THE ENTIRE PROJECT
+./../destination/deploy_dummy_dest.sh "$user" "$dirCebolla" "$branch" "$port"
+./../router/deploy_onion_routers.sh "$maxNodes" "$user" "$dirCebolla" "$branch" "$port" "$okrPort"
+./../directory/deploy_directory.sh "$user" "$directory" "$branch" "$port" "$okrPort"
+./../client/deploy_client.sh "$user" "$dirCebolla" "$branch"
+
+# now you can log in to cs-10 (the originator) and run it.  The whole onion network should
+# have been deployed (assuming you passed the port and okrPort arguments)

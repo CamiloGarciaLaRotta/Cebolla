@@ -76,12 +76,12 @@ done
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
-if  # didn't pass args correctly
+if  # port or okrPort given but not both
+    [ -n "$port" ] && [ -z "$okrPort" ] || [ -n "$okrPort" ] && [ -z "$port" ]
+    # didn't pass args correctly
     [ -z "$maxNodes" ] || [ -z "$user" ] || [ -z "$dirCebolla" ] ||
     # maxNodes out of range
     [ "$maxNodes" -lt "1" ] || [ "$maxNodes" -gt "50" ] ||
-    # port or okrPort given but not both
-    [ -n "$port" ] && [ -z "$okrPort" ] || [ -n "$okrPort" ] && [ -z "$port" ]
 then
     echo -e "$helpstring"
     exit 1
