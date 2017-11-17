@@ -45,9 +45,7 @@ done
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
-if  # not passed 6 cli tokens
-    [ "$#" -ne "4" ] ||
-    # didn't pass args correctly
+if  # didn't pass args correctly
     [ -z "$user" ] || [ -z "$port" ]
 then
     echo -e "$helpstring"

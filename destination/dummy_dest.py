@@ -11,24 +11,18 @@ parser = argparse.ArgumentParser() # instantiate cli args parser
 
 parser.add_argument("port", help="port to listen on", type=int)
 parser.add_argument("-v", "--verbose",
-                            help="level of logging verbose", action="store_true")
+                    help="level of logging verbose", action="store_true")
 
 args = parser.parse_args() # parse the args
-
-# TODO disabled to facilitate testing
-# validate args against conditions
-#if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
-#    parser.error("port must satisfy: 5551 <= port <= 5557")
 
 
 #       GLOBALS
 ########################################################
 
-HOST = ""
-PORT = args.port
 SOCKET_LISTEN = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-SOCKET_LISTEN.bind((HOST,PORT))
+SOCKET_LISTEN.bind(("",args.port))
 SOCKET_LISTEN.listen(1)
+
 
 #       MAIN
 ########################################################
@@ -57,8 +51,8 @@ def reply(conn_socket, addr):
             mod_msg = msg.upper().encode('utf-8')
             conn_socket.send(mod_msg)
     except Exception as e:
-        if args.verbose: print('[Error] Lost communication with {}:{}'
-                                .format(addr[0], str(addr[1])))
+        if args.verbose:
+            print('[Error] Lost communication with {}:{}'.format(addr[0], str(addr[1])))
         conn_socket.close()
         SOCKET_LISTEN.close()
 
