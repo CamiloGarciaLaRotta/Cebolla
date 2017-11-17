@@ -101,6 +101,7 @@ else # deploy version on github branch
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
 		cd $dirCebolla
 		git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
+		exit
 		DOC
 fi
 
