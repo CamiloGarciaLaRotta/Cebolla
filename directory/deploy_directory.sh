@@ -66,9 +66,7 @@ done
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
-if  # dont have 6 or 8 args
-    [ "$#" -ne "10" ] && [ "$#" -ne "8" ] ||
-    # didn't pass args correctly
+if  # didn't pass args correctly
     [ -z "$user" ] || [ -z "$dirCebolla" ] || [ -z "$port" ] || [ -z "$okrPort" ] ||
     # port out of range
     [ "$port" -lt "5551" ] || [ "$port" -gt "5557" ] # 7 group members, 7 ports
