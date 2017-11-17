@@ -11,7 +11,7 @@ cd "$THIS_DIR"
 read -r -d '' helpstring << DOC
 deploy_all.sh usage:
 
-deploy_all.sh -m maxNodes -u user -d dirCebolla [-b branch] [-p port -o okrPort]
+deploy_all.sh -m <maxNodes> -u <user> -d <dirCebolla> [-b <branch>] [-p <port> -o <okrPort>]
 
  maxNodes     the number of nodes to setup in the onion network
  user         login username on remote host

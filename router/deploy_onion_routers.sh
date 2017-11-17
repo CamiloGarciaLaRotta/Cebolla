@@ -12,7 +12,7 @@ cd "$THIS_DIR"
 read -r -d '' helpstring <<DOC
 deploy_onion_routers.sh usage:
 
-deploy_onion_routers.sh -m maxNodes -u user -d dirCebolla [-b branch] [-p port -o okrPort]
+deploy_onion_routers.sh -m <maxNodes> -u <user> -d <dirCebolla> [-b <branch>] [-p <port> -o <okrPort>]
 
  @param  maxNodes     the number of onion router nodes to set up. 1 <= maxNodes <= 50
  @param  user         the username to be used to login to the remote host
@@ -77,11 +77,11 @@ done
 ################################
 
 if  # port or okrPort given but not both
-    [ -n "$port" ] && [ -z "$okrPort" ] || [ -n "$okrPort" ] && [ -z "$port" ]
+    [ -n "$port" ] && [ -z "$okrPort" ] || [ -n "$okrPort" ] && [ -z "$port" ] ||
     # didn't pass args correctly
     [ -z "$maxNodes" ] || [ -z "$user" ] || [ -z "$dirCebolla" ] ||
     # maxNodes out of range
-    [ "$maxNodes" -lt "1" ] || [ "$maxNodes" -gt "50" ] ||
+    [ "$maxNodes" -lt "1" ] || [ "$maxNodes" -gt "50" ]
 then
     echo -e "$helpstring"
     exit 1
