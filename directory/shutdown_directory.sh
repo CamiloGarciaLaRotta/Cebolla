@@ -5,7 +5,6 @@ THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$THIS_DIR"
 
 
-
 #       DOCUMENTATION
 ################################
 
@@ -17,9 +16,8 @@ shutdown_directory.sh -u <user> -p <port>
  @param  port         the port on which the running directory node is listening
 
 What it does:
-login to cs-1.cs.mcgill.ca and kill the directory.py running on the port specified
+ login to cs-1.cs.mcgill.ca and kill the directory.py listening on the port specified
 DOC
-
 
 
 #      ARGUMENT PARSING
@@ -44,9 +42,7 @@ done
 #   ILLEGAL ARGUMENT CHECKS
 ################################
 
-if  # not passed 4 cli tokens
-    [ "$#" -ne "4" ] ||
-    # didn't pass args correctly
+if  # didn't pass required args correctly
     [ -z "$user" ] || [ -z "$port" ]
 then
     echo -e "$helpstring"
