@@ -11,12 +11,13 @@ cd "$THIS_DIR"
 read -r -d '' helpstring << DOC
 deploy_directory.sh usage:
 
-deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port> -o <okrPort>
+deploy_directory -u <user> -d <dirCebolla> [-b <branch>] -p <port> -o <okrPort> [-v]
  @param  user         the username to be used to login to the remote host
  @param  dirCebolla   the path to the dirCebolla directory on the remote host
  @option branch       if given, the github branch version to use, else use local version
  @param  port         the port number for the directory node to listen on. 5551 <= port <= 5557
  @param  okrPort      the port number that onion routers listen on for key requests
+ @flag   v            if given, run the directory node in verbose mode
 
 What it does:
  1. login to cs-1.cs.mcgill.ca
@@ -35,7 +36,8 @@ dirCebolla="" # the path to the root of the Cebolla directory
 branch=       # the git branch to checkout on remote host
 port=""       # the port to configure the server to listen on
 okrPort=""    # onion routers respond to pubkey requests on this port
-while getopts "u:d:b:p:o:" opt
+verbose=""
+while getopts "u:d:b:p:o:v" opt
 do
     case "$opt" in
         u)
@@ -52,6 +54,9 @@ do
             ;;
         o)
             okrPort="$OPTARG"
+            ;;
+        v)
+            verbose="-v"
             ;;
     esac
 done
@@ -80,17 +85,17 @@ fi
 servername="cs-1.cs.mcgill.ca"
 if [ -z "$branch" ]
 then # use local version
-    scp "directory.py" "$user"@"$servername":"$dirCebolla/directory/directory.py"
+    scp "onion_directory.py" "$user"@"$servername":"$dirCebolla/directory/onion_directory.py"
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
 		cd $dirCebolla
-		nohup python3 directory/directory.py 50 $port $okrPort > /dev/null 2>&1 &
+		nohup python3 directory/onion_directory.py 50 $port $okrPort $verbose > /dev/null 2>&1 &
 		exit
 		DOC
 else # use version on github branch
     ssh -t "$user"@"$servername" > /dev/null 2>&1 'bash -s' <<- DOC
         cd $dirCebolla
 		git fetch origin; git checkout $branch; git reset --hard; git pull origin $branch
-		nohup python3 directory/directory.py 50 $port $okrPort > /dev/null 2>&1 &
+		nohup python3 directory/onion_directory.py 50 $port $okrPort $verbose > /dev/null 2>&1 &
 		exit
 		DOC
 fi
