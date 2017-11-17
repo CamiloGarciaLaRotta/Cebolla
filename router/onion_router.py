@@ -14,32 +14,25 @@ from onion import OnionNodeSecurityEnforcer
 #########################################################
 
 # define cli positional args
-parser = argparse.ArgumentParser() # instantiate cli args parser
+parser = argparse.ArgumentParser()
 
 parser.add_argument("port", help="port to listen on", type=int)
 parser.add_argument("dir_port", help="port to listen for directory", type=int)
 parser.add_argument("-v", "--verbose",
                     help="level of logging verbose", action="store_true")
 
-args = parser.parse_args() # parse the args
-
-# TODO disabled to facilitate testing
-# validate args against conditions
-#if args.port < 5551 or args.port > 5557: # 7 group members, each get a port
-#    parser.error("port must satisfy: 5551 <= port <= 5557")
+args = parser.parse_args()
 
 
 #       GLOBALS
 ########################################################
 
-HOST = ""
-PORT = args.port
 LISTENER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-LISTENER_SOCKET.bind((HOST,PORT))
+LISTENER_SOCKET.bind(("",args.port))
 LISTENER_SOCKET.listen(50)
 
 DIR_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-DIR_SOCKET.bind((HOST,args.dir_port))
+DIR_SOCKET.bind(("",args.dir_port))
 DIR_SOCKET.listen(1)
 
 KEYPAIR = stealth.RSAVirtuoso()     # node's encryption key pairs
@@ -118,7 +111,7 @@ def two_way_setup(back_conn):
     if args.verbose: print('[Status] Connected.')
     if args.verbose: print('[Status] Sending: {} To: {}'.format(msg, pathdata[1]))
     forw_conn.sendall(msg.encode('utf-8'))
-    
+
     # Now that two way communication is established, pass data back and forth forever
     t = threading.Thread(target=backward_transfer, args=(forw_conn, back_conn))
     t.setDaemon(True)
