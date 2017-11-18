@@ -134,7 +134,7 @@ def handle_path_request(conn):
 
     path = random.sample(ROUTERS, 3)
     if args.verbose:
-        print('[Status] Selected path: {}, {}, {}'.format(*[path[i]['addr'] for i in range(3)])
+        print('[Status] Selected path: {}, {}, {}'.format(*[path[i]['addr'] for i in range(3)]))
 
     rng = AESGenerator()
     rng.reseed(condata[0])
