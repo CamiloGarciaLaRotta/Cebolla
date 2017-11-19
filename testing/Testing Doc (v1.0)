@@ -1,0 +1,93 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts, mathtools}
+\usepackage{enumitem}                   
+\usepackage{listings}                   % insert code
+\usepackage{graphicx}                   % Insert images
+%\graphicspath{ {images/} }
+\usepackage[letterpaper, margin=1.5cm]{geometry}
+\usepackage[singlespacing]{setspace}
+
+\begin{document}
+\noindent
+\large \textbf{ECSE 414 Intro. to Telecom. Networks}  \\
+\large \textbf{Sample Testing Document} 
+\tableofcontents
+
+\section{Stress Testing}
+
+\subsection{Message Size}
+\textbf{Testing assigned to:} Name \\
+\textbf{Purpose:} We will need to know the extent of how large or small of a message our network will be able to handle. This test wont be conducted specifically to one class but to the whole system.\\
+
+\subsection{Test cases}
+Cases Being Tested:
+\begin{enumerate}
+    \item Maximum Message Size
+    \item Minimum Message Size
+\end{enumerate}
+
+\subsubsection{Test case 1: }
+\textbf{Test Case Description:\\} We will be testing the maximum message size
+that can be used for the network to continue to function normally. This is done to know what happens when a message that is too large is sent and to know the capabilities of the network.\\
+\textbf{Steps to perform test: \\} 
+\begin{enumerate}
+    \item Initialize by starting the testing environment using the scripts 
+provided in the repository
+    \item Once the environment is set up, start by sending a message
+that is the entire alphabet
+    \item Once you see that this message was successfully sent, 
+continue by sending increasingly larger messages by copy and pasting the 
+original message multiple times
+    \item When you finally reach a point where the network stops functioning
+properly, note down how many time you you put the original message in the
+current message you sent to cause this event, this will be noted down as 
+message n
+    \item Restart the environment and send instead the n-1 message along 
+with adding a single additional character
+    \item If successful, continue adding characters until an error is 
+reached again, the message before the error is the maximum message length
+that can be used
+\end{enumerate}
+\textbf{Test case Number: \\} STC1
+
+\subsubsection{Test case 2: }
+\textbf{Test Case Description:\\} We will be testing the minimum message size that can be used for the network to continue to function normally.\\
+\textbf{Steps to perform test: \\} 
+\begin{enumerate}
+    \item Initialize by starting the testing environment using the scripts 
+provided in the repository
+    \item Once the environment is set up, send an message that uses only 
+one character
+    \item Once this returns successful send another message with nothing
+in it
+\end{enumerate}
+\textbf{Test case Number: \\} STC2
+
+\subsection{Test Results}
+
+\subsubsection{Test Summary:}
+\subsubsection*{Stress Tests}
+\begin{enumerate}
+    \item STC1: the maximum message length that can be sent in our network
+is 834 character. When we reached this length, the entire network stopped 
+functioning and required the entire network to be reset.
+    \item STC2: the minimum message length that can be sent in our network
+is 1 character, where is when we send nothing none of the nodes stop working
+but there is no reply message confirming our message arrived If we decide to 
+send a non empty message after the network still functions properly.
+\end{enumerate}
+
+\subsubsection{Result Analysis}
+\textbf{Failed Test Cases: }
+\begin{enumerate}
+    \item TC1
+    \item TC3
+    \item TC10
+\end{enumerate}
+
+\begin{flushleft}
+Explain the failed test cases and what needs to be done and plans on retesting.
+\end{flushleft}
+
+\end{document}
