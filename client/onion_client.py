@@ -48,7 +48,8 @@ DIRECTORY_NODE = 'cs-1'
 DEFAULT_PORT = 80
 
 ORIGINATOR_CIPHER = OriginatorSecurityEnforcer()
-
+Start = 0
+End = 0
 
 #   MAIN
 #################################################################################
@@ -91,6 +92,8 @@ def run_client_node():
         msg = raw_input('\nEnter Message > ')
         onion = ORIGINATOR_CIPHER.create_onion(4, msg)
         SENDER_SOCKET.sendall(onion.encode('utf-8'))
+        Start = time.clock()
+        print Start
         #Wait for a short period for a response. 
         #Looks nicer to see the response before the next prompt.
         time.sleep(0.3) 
@@ -151,7 +154,8 @@ def handle_response(conn):
 
         msg = ORIGINATOR_CIPHER.decipher_response(3, msg) #Depth is 3 because all 3 onion nodes encrypted
         print('Reply from {}: {}'.format(args.destination, msg))
-
+        End = time.clock()
+        print((End-Start))
 
 #   RUN MAIN
 ###############################################################################
