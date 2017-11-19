@@ -4,6 +4,7 @@ import random               # for random path selection
 import socket               # for TCP communication
 import threading            # for one thread per TCP connection
 import time                 # for sleep between message prompts
+import datetime
 
 from Crypto.PublicKey import RSA
 
@@ -92,7 +93,7 @@ def run_client_node():
         msg = raw_input('\nEnter Message > ')
         onion = ORIGINATOR_CIPHER.create_onion(4, msg)
         SENDER_SOCKET.sendall(onion.encode('utf-8'))
-        Start = time.clock()
+        Start = datetime.datetime.now().time()
         print Start
         #Wait for a short period for a response. 
         #Looks nicer to see the response before the next prompt.
@@ -154,8 +155,8 @@ def handle_response(conn):
 
         msg = ORIGINATOR_CIPHER.decipher_response(3, msg) #Depth is 3 because all 3 onion nodes encrypted
         print('Reply from {}: {}'.format(args.destination, msg))
-        End = time.clock()
-        print((End-Start))
+        End = datetime.datetime.now().time()
+        print End
 
 #   RUN MAIN
 ###############################################################################

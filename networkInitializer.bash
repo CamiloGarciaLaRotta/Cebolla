@@ -18,11 +18,21 @@ tmux neww -n client
 x=1
 while [ $x -le $1 ]
    do
-        tmux send-keys -t ssh$x "ssh $2@lab2-$x.cs.mcgill.ca" Enter;	
+        tmux send-keys -t ssh$x "ssh $2@lab2-$x.cs.mcgill.ca" Enter;
+	sleep 2
+	tmux send-keys -t ssh$x "$4" Enter;
 	x=$(($x + 1))
   done
       
 tmux send-keys -t directoryNode "ssh $2@cs-1.cs.mcgill.ca" Enter;\
+sleep 1.5
+tmux send-keys -t directoryNode "$4" Enter;\
+
 tmux send-keys -t dummyDest "ssh $2@$3" Enter;\
+sleep 1.5
+tmux send-keys -t dummyDest "$4" Enter;\
+
 tmux send-keys -t client "ssh $2@cs-3.cs.mcgill.ca" Enter ;\
-	
+sleep 1.5
+tmux send-keys -t client "$4" Enter;\
+
