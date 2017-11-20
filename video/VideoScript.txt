@@ -10,6 +10,8 @@ From client to destination, when a node would decrypt, it would ony know the nex
 to do before hand. If they were forarder, they would only send to the next node, and if the destination, they would see the message and reply back with a encrypted response.
 This response would then be encrypted by every node on its way back to the client. 
 
+We ensured that the packet was being forwarded through the proper path of nodes assigned to us by the directory node, and that the return message also used the same path.
+
 Automation for the network set up and all test were manual tests. 
 (show screen shots for before and after for running scripts) 
 
