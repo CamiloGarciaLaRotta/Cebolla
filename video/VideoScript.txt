@@ -1,0 +1,54 @@
+Methodology:
+
+	We tested the functionality such that the nodes are set up and are able to communicate with each other that the client is given a 
+path by the directory node and that the message are encrypted between each node, such that only the client and the destination can see the message.
+
+	Upon testing, we found that encryption was functional at every node, the nodes were unable to see the message sent by the client and only the 
+destination can see the message. The response sent by the destination was only able to be decrypted by the client as per specifications. 
+
+From client to destination, when a node would decrypt, it would ony know the next node to send to, they only knew what to do once decrypt it, and wouldn't know what
+to do before hand. If they were forarder, they would only send to the next node, and if the destination, they would see the message and reply back with a encrypted response.
+This response would then be encrypted by every node on its way back to the client. 
+
+Automation for the network set up and all test were manual tests. 
+(show screen shots for before and after for running scripts) 
+
+In order to perform the test it first required the set up of the testing environment or just setting up the network for testing. 
+To help setting up the environement faster, the testing team created two bash scripts:
+	1. networkInitializer.bash: 
+		- Description: this script will open multiple windows while in tmux, for each windows, it will also connect to the desired
+machines we wish to use for out onion network
+		- Inputs:
+			1. The number of routers
+			2. Your CS account user name
+			3. The CS path for the destination
+	2. executeNetwork.bash
+		- Description: this script will input the commands to set up the routers, the dummy destination node, the directory node,
+and the client along with also making providing an output to let the user know if the setup was successful or not
+		- Inputs: 
+			1. The number of path nodes (same as networkInitializer)
+			2. the CS path to the destination
+			3. Port # for the regular data communication
+			4. Port used for pubkey
+			5. Port for dummy destination and client
+
+The steps are as follows to set up the network:
+	1. From a linux terminal ssh into your McGill CS account
+	2. Clone the Testing branch from the Cebolla repository
+	3. Enter the tmux command into the terminal
+	4. Now call the bash script networkInitializer.bash from the repository and enter the appropriate inputs. Note you will now have to enter your CS account password for each of the 
+new window that has been opened
+	5. Now call the second bash script executeNetwork.bash
+
+
+Results:
+
+	Through testing, we found that the maximum message size is 833 characters.
+	(Show screen shots for 833 characters)
+	and any message that is greater will create an error on the network.
+	(show screen shot for fail)
+	Since the packet we are sending is always a constant size, there is no variation in the time to send the packet with respect to the packet
+	size. 
+	(cut to the timing graph)
+	
+	As shown in the graph, on average the RTT of the onion network is more than 3.42 ms longer than that of the regular network.
