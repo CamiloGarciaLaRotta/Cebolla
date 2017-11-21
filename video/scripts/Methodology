@@ -1,0 +1,31 @@
+Methodology:
+
+The architecture
+We leveraged Python’s socket and Threading library to avoid having to implement the lower level requirements of this project.
+The nodes that comprise the Onion network are: the Directory, the Router, the Client and the Destination.  
+The directory and the router nodes sit in the inside of the network, only listening on predefined ports. 
+Whereas the client and the destination sit on the edge of the network, being able to communicate on other ports.
+All the nodes in the network are multithreaded to support multiple parallel communication between different clients, destination pairs.
+The Directory node keeps track of participant router nodes and generates a random path of 3 nodes whenever a client node wishes to communicate through the network.
+The router node has 2 primordial function: to pass along the path a setup onion and to handle the bidirectional transfer of onions to the next and prior node in the path. 
+The destination, nicknamed dummy destination, has the sole purpose of responding to any incoming message on an arbitrarily selected port. 
+The client acts as the command line interface for the client using the network. Given a destination it will request a path from the Directory, setup the virtual circuit and build the onion to send to the destination.
+All the nodes on the network use a custom-made library for encryption, wich we named Stealth and provides convenient object for symmetric and asymmetric encryption.
+This implementation of the onion router is built upon TCP communication and relies on a globally defined socket for all internal nodes.
+
+Communication setup
+
+The unit of communication is the so called ‘onion’. It is a data structure that contains the client’s message wrapped in successive layers of encryption. 
+Its creation is handled by the Client node at the sending stage. At the reply stage the plain response is iteratively encrypted as it traverses the nodes in the path back to the original sender.
+
+Say a Client wishes to send its traffic through a random ordered set of onion routers.  
+First it must determine which routers will participate in its virtual circuit, and then it must set up a secure communications channel through them.   
+It delegates the task of router selection to the Directory Node.  When asked to do so by a Client, the Directory Node will construct a random ordered list of onion routers and their associated crypto keys.  
+The Client will then receive this list of routers and their crypto keys, and will use it to incrementally establish the secure channel through the routers in the list. 
+After it receives the acknowledgement from the three router nodes in the path it proceeds to create the data Onion such that the first node can “peel” the first encryption layer and so on.  
+From the perspective of the routers, the communication establishment process begins with receiving a symmetric key encrypted with its public key.  
+It decrypts the symmetric key using its private key and responds with an ACK the node that sent it the message, who passes the ACK back to the client. 
+From this moment the router will set two separate threads, the first one will handle the backwards communication, the second one the forwards communication. 
+From the Destination’s perspective, all received messages are in plain text and it will respond to all its parallel open TCP connections back in plain text. 
+It is up to the Routers on the path to successively encrypt the reply Onion until it reaches the Client. Who can the peel them off in forward order with the symmetric keys obtained from the circuit establishment.
+
