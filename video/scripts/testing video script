@@ -41,13 +41,12 @@ new window that has been opened
 
 
 Results:
-
+	
+	(* cut to the image "messageSizeScreenshot.png" - may have to crop/zoom in *)
 	Through testing, we found that the maximum message size is 833 characters.
-	(Show screen shots for 833 characters)
 	and any message that is greater will create an error on the network.
-	(show screen shot for fail)
 	Since the packet we are sending is always a constant size, there is no variation in the time to send the packet with respect to the packet
 	size. 
-	(cut to the timing graph)
 	
+	(* cut to the graph located in "testing.xlsx" *)
 	As shown in the graph, on average the RTT of the onion network is more than 3.42 ms longer than that of the regular network.
