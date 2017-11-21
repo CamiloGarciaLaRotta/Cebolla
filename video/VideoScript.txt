@@ -1,13 +1,10 @@
 Methodology:
 
-	We tested the functionality such that the nodes are set up and are able to communicate with each other that the client is given a 
-path by the directory node and that the message are encrypted between each node, such that only the client and the destination can see the message.
+	We tested the functionality such that the nodes are set up and are able to communicate with each other. The client is given a path by the directory node and the messages are encrypted between each node, such that only the client and the destination can see the message.
 
-	Upon testing, we found that encryption was functional at every node, the nodes were unable to see the message sent by the client and only the 
-destination can see the message. The response sent by the destination was only able to be decrypted by the client as per specifications. 
+	Upon testing, we found that encryption was functional at every node, the nodes were unable to see the message sent by the client and only the destination can see the message. The response sent by the destination was only able to be decrypted by the client as per specifications. 
 
-From client to destination, when a node would decrypt, it would ony know the next node to send to, they only knew what to do once decrypt it, and wouldn't know what
-to do before hand. If they were forarder, they would only send to the next node, and if the destination, they would see the message and reply back with a encrypted response.
+	From client to destination, when a node would decrypt, it would only know the next node to send to, they only knew what to do once decrypting it, and wouldn't know what to do before hand. If they were to forward the message, they would only send to the next node, and if they are the destination, they would see the message and reply back with a encrypted response.
 This response would then be encrypted by every node on its way back to the client. 
 
 We ensured that the packet was being forwarded through the proper path of nodes assigned to us by the directory node, and that the return message also used the same path.
