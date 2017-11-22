@@ -43,7 +43,6 @@ DIR_SOCKET.bind((HOST,args.dir_port))
 DIR_SOCKET.listen(1)
 
 KEYPAIR = stealth.RSAVirtuoso()     # node's encryption key pairs
-ONION_CIPHER = OnionNodeSecurityEnforcer()
 
 DEFAULT_NEXT_PORT = 80              # default port of next hop in virtual circuit
 
@@ -99,17 +98,19 @@ def dir_setup():
 def two_way_setup(back_conn):
     # Wait for first contact
     # First message will contain (symkey, addr of next node, port of next node)
+    onion_cipher = OnionNodeSecurityEnforcer()
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
     if args.verbose: print('[Status] received estab: ' + msg)
     pathdata = KEYPAIR.extract_path_data(msg) # Gets the (symkey, addr, port) tuple
-    ONION_CIPHER.set_key(pathdata[0])
+    symkey = pathdata[0]
+    onion_cipher.set_key(symkey)
     back_conn.sendall("ACK".encode('utf-8'))
 
     # Wait for next message to connect with the next node
     # Wait is necessary because we still don't have the (symkey, addr, port) to give to the next node
     msg = back_conn.recv(2048).decode('utf-8').rstrip()
     if args.verbose: print('[Status] received next: ' + msg)
-    msg = ONION_CIPHER.peel_layer(msg) #Peel off layer of encryption. Under this is the pubkey encrypted tuple
+    msg = onion_cipher.peel_layer(msg) #Peel off layer of encryption. Under this is the pubkey encrypted tuple
 
     # Now that we have the pubkey-encrypted (symkey, addr, tuple), we can encrypt to forw_conn and send it
     forw_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -120,31 +121,34 @@ def two_way_setup(back_conn):
     forw_conn.sendall(msg.encode('utf-8'))
     
     # Now that two way communication is established, pass data back and forth forever
-    t = threading.Thread(target=backward_transfer, args=(forw_conn, back_conn))
+    # OnionNodeSecurityEnforcer must be passed to child threads
+    # Note that passing a symkey and creating an OnionNodeSecurityEnforcer won't suffice,
+    # because the new random number generators will be out of sync with those at the originator.
+    t = threading.Thread(target=backward_transfer, args=(forw_conn, back_conn, onion_cipher))
     t.setDaemon(True)
     t.start()
-    forward_transfer(back_conn, forw_conn)
+    forward_transfer(back_conn, forw_conn, onion_cipher)
 
 
 #       PASS DATA FORWARD AND BACKWARD FOREVER
 ########################################################
 
-def forward_transfer(back_conn, forw_conn):
+def forward_transfer(back_conn, forw_conn, onion_cipher):
     while True:
         msg = back_conn.recv(2048).decode('utf-8').rstrip()
 
         if args.verbose: print('[Data] From back_conn: {}'.format(msg))
 
         # pass it on
-        forw_conn.sendall(ONION_CIPHER.peel_layer(msg).encode('utf-8'))
+        forw_conn.sendall(onion_cipher.peel_layer(msg).encode('utf-8'))
 
 
-def backward_transfer(forw_conn, back_conn):
+def backward_transfer(forw_conn, back_conn, onion_cipher):
     while True:
         msg = forw_conn.recv(2048).decode('utf-8').rstrip()
 
         if args.verbose: print('[Data] From fwd_conn: {}'.format(msg))
-        msg = ONION_CIPHER.add_layer(msg)
+        msg = onion_cipher.add_layer(msg)
 
         # pass it on
         back_conn.sendall(msg.encode('utf-8'))
