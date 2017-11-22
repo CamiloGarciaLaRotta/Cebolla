@@ -16,11 +16,12 @@ In order to perform the test it first required the set up of the testing environ
 To help setting up the environement faster, the testing team created two bash scripts:
 	1. networkInitializer.bash: 
 		- Description: this script will open multiple windows while in tmux, for each windows, it will also connect to the desired
-machines we wish to use for out onion network
+machines we wish to use for our onion network and log in as well.
 		- Inputs:
 			1. The number of routers
 			2. Your CS account user name
 			3. The CS path for the destination
+			4. Your CS account password
 	2. executeNetwork.bash
 		- Description: this script will input the commands to set up the routers, the dummy destination node, the directory node,
 and the client along with also making providing an output to let the user know if the setup was successful or not
@@ -35,8 +36,8 @@ The steps are as follows to set up the network:
 	1. From a linux terminal ssh into your McGill CS account
 	2. Clone the Testing branch from the Cebolla repository
 	3. Enter the tmux command into the terminal
-	4. Now call the bash script networkInitializer.bash from the repository and enter the appropriate inputs. Note you will now have to enter your CS account password for each of the 
-new window that has been opened
+	4. Now call the bash script networkInitializer.bash from the repository and enter the appropriate inputs. Note that you may have to 
+	wait a moment for everything to log in correctly
 	5. Now call the second bash script executeNetwork.bash
 
 
