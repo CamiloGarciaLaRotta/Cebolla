@@ -1,3 +1,4 @@
+(* for the methodology part take screenshots or parts of the "Environment Setup" video *)
 Methodology:
 
 	We tested the functionality such that the nodes are set up and are able to communicate with each other. The client is given a path by the directory node and the messages are encrypted between each node, such that only the client and the destination can see the message.
@@ -10,7 +11,6 @@ This response would then be encrypted by every node on its way back to the clien
 We ensured that the packet was being forwarded through the proper path of nodes assigned to us by the directory node, and that the return message also used the same path.
 
 Automation for the network set up and all test were manual tests. 
-(show screen shots for before and after for running scripts) 
 
 In order to perform the test it first required the set up of the testing environment or just setting up the network for testing. 
 To help setting up the environement faster, the testing team created two bash scripts:
