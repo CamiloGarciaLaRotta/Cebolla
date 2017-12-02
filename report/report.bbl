@@ -1,8 +1,32 @@
 \begin{thebibliography}{1}
 
+\bibitem{FormalTreatment}
+J.~Camenisch and A.~Lysyanskaya, ``A formal treatment of onion routing,'' in
+  {\em Annual International Cryptology Conference}, pp.~169--187, Springer,
+  2005.
+
+\bibitem{OnionRoutingPatent}
+M.~G. Reed, P.~F. Syverson, and D.~M. Goldschlag, ``Onion routing network for
+  securely moving data through communication networks,'' July~24 2001.
+\newblock US Patent 6,266,704.
+
 \bibitem{HidingRoutingInformation}
 D.~M. Goldschlag, M.~G. Reed, and P.~F. Syverson, ``Hiding routing
   information,'' in {\em International Workshop on Information Hiding},
   pp.~137--150, Springer, 1996.
+
+\bibitem{SymmetricVsAsymmetric}
+M.~Agrawal and P.~Mishra, ``A comparative survey on symmetric key encryption
+  techniques,'' {\em International Journal on Computer Science and
+  Engineering}, vol.~4, no.~5, p.~877, 2012.
+
+\bibitem{AES}
+J.~Daemen and V.~Rijmen, ``Announcing the advanced encryption standard (aes),''
+  {\em Federal Information Processing Standards Publication}, vol.~197, 2001.
+
+\bibitem{RSA}
+R.~L. Rivest, A.~Shamir, and L.~Adleman, ``A method for obtaining digital
+  signatures and public-key cryptosystems,'' {\em Communications of the ACM},
+  vol.~21, no.~2, pp.~120--126, 1978.
 
 \end{thebibliography}

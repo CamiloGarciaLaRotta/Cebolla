@@ -1,1 +1,8 @@
 \contentsline {chapter}{\numberline {1}Introduction and Background}{2}{chapter.1}
+\contentsline {part}{Appendices}{6}{part*.2}
+\contentsline {chapter}{\numberline {A}A Brief Conspectus of Cryptography}{6}{appendix.A}
+\contentsline {section}{\numberline {A.1}Terminology}{6}{section.A.1}
+\contentsline {section}{\numberline {A.2}Symmetric Cryptography}{6}{section.A.2}
+\contentsline {section}{\numberline {A.3}Asymmetric Cryptography}{7}{section.A.3}
+\contentsline {chapter}{\numberline {B}List of External Resources}{9}{appendix.B}
+\contentsline {part}{Bibliography}{10}{appendix*.3}
