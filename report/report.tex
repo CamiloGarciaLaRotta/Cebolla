@@ -32,7 +32,7 @@ Brilliance}
 \author{Camilo Garcia La Rotta (PUT NUMBER HERE)\\Dennis Liu (PUT NUMBER HERE)\\Stuart
 Mashaal (PUT NUMBER HERE)\\Spiros-Daniel
 Mavroidakos (260689391)\\Jastaj Virdee (PUT NUMBER HERE)\\Harley Wiltzer (260690006)\\Edward Zhao
-(PUT NUMBER HERE)}
+(260690376)}
 \date{December 6, 2017}
 
 \begin{document}
@@ -142,6 +142,30 @@ encryption or decryption will be observed. Although the Onion Routing protocol i
 remains to be seen if it is powerful enough for practical use. This report aims to determine if the
 proposed Onion Routing scheme can be used in practice, and will provide discussion concerning the
 cost of improving its practicality and the practicality of anonymous communication altogether.
+\chapter{Results}
+Our onion router network has the following implemented: 
+\begin{enumerate}
+    \item Directory node: Responsible for the specifying a path/ series of router nodes to pass through when a message is sent and to also send the respective keys for the routers
+    \item Onion router node: Responsible for peeling and encrypting messages depending if the message is in the forward or backward channel. Depending on how the routers are placed in a path, when a message is sent from one router to another, the receiver will send an acknowledgment message to confirm it has received the correct message.
+    \item Client node:
+    \begin{enumerate}
+        \item This is the node that will send the layered encrypted message in the forward channel
+        \item The client node will also send a message to all the nodes given by the directory node to set up a channel for it to send a message to the destination node
+        \item When it receives the encrypted confirmation message from the destination node, it will then decrypt the message to allow to user to see
+    \end{enumerate}
+    \item Destination node: This is the node that will receive the complete message also send back a confirmation message in the backward channel. This message will have a layer of encryption added on at every onion router node until it has reached the client node to be decrypted
+\end{enumerate}
+
+Along the essential features implemented, out onion network also included the following features :
+\begin{enumerate}
+    \item Multiple users/clients: Once the onion network has been set up, it is capable of handling more than just one user/client. To show this feature, the first client must set up the whole network. Afterwards, anyone else simply has to set up a client node and they will be one the same network that the first client set up. All clients on this node will be able to send messages without any interruptions or errors occurring.
+    \item Message size of 833 characters and encryption padding:
+    \begin{enumerate}
+        \item The maximum message size that can be sent in our network is 833 characters, this can be easily changed by simply modifying a small portion of the code. 
+        \item The message size also correlates to another feature of encryption. Our goal was to make it more difficult for an outside observer to be able to distinguish who is the destination and who is the originator by keeping the message at a constant size. In order to do see every time a layer of encryption is peeled away, our application will add a layer of padding such that it is difficult to see when it may arrive at the originiator.
+    \end{enumerate}
+\end{enumerate}
+
 \part*{Appendices}
 \addcontentsline{toc}{part}{Appendices}
 \begin{appendix}
