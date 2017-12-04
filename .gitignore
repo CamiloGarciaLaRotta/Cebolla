@@ -7,6 +7,9 @@
 *.dvi
 *.fdb_latexmk
 *.fls
+*.blg
+*.out
+*.toc
 
 # python-related bs
 __pycache__/
