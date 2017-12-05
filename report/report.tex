@@ -1,4 +1,7 @@
 \documentclass[10pt]{report}
+
+\RequirePackage{etex}
+
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{listings}
 \usepackage{graphicx}
@@ -21,24 +24,39 @@
 \titleformat{\chapter}{\bfseries\huge}{\thechapter.}{20pt}{\centering}
 
 \hypersetup{
-	colorlinks=true,
-	linktoc=all,
-	linkcolor=lblue,
-	citecolor=dyellow,
+    colorlinks=true,
+    linktoc=all,
+    linkcolor=lblue,
+    citecolor=dyellow,
 }
 
-\title{Onion Routing: A Quest for Internet Anonymity, and Perhaps a Quest for Unparalleled
-Brilliance}
-\author{Camilo Garcia La Rotta (PUT NUMBER HERE)\\Dennis Liu (PUT NUMBER HERE)\\Stuart
-Mashaal (PUT NUMBER HERE)\\Spiros-Daniel
-Mavroidakos (260689391)\\Jastaj Virdee (PUT NUMBER HERE)\\Harley Wiltzer (260690006)\\Edward Zhao
-(260690376)}
+\title{
+    Onion Routing: A Quest for Internet Anonymity\\and Perhaps also for Unparalleled Brilliance
+}
+
+\author{
+    Camilo Garcia La Rotta\\(PUT ID HERE) \and
+    Dennis Liu\\(PUT ID HERE) \and
+    Stuart Mashaal\\(260639962) \and
+    Spiros-Daniel Mavroidakos\\(260689391) \and
+    Jastaj Virdee\\(PUT ID HERE) \and
+    Harley Wiltzer\\(260690006) \and
+    Edward Zhao\\(260690376)\\\\
+}
+
 \date{December 6, 2017}
 
 \begin{document}
-\maketitle
+
+\begin{titlepage}
+    \maketitle
+\end{titlepage}
+
 \tableofcontents
+
 \doublespacing
+
+
 \chapter{Introduction and Background}
 Suppose it is desired to communicate sensitive information across the Internet to a trusted source.
 Of course, it should not be possible for an arbitrary observer to read this information. The problem
@@ -62,6 +80,7 @@ server itself. Users of VPN services must trust that the owner of the VPN server
 intentions, and does not, for example, keep logs of the packets it receives. Although many users may
 trust the VPN servers they use, it is important to note that the VPN service does not, in fact,
 provide complete anonymity.\\\\
+
 This report will explore and provide details of the implementation of the Onion Routing protocol, a
 method of communication that was shown to provide complete anonymity \cite{FormalTreatment}. Onion
 Routing may be seen as an extension of the VPN scheme described above, which makes creative use of
@@ -69,8 +88,8 @@ several intermediate servers to hide the endpoints of a communication channel fr
 observer. An Onion Routing network consists of a set of \textit{onion routers}, denoted by
 $\mathcal{O}$, and a \textit{directory node}. The directory node is responsible for knowing the
 details of all onion routers and selecting a random path of $n$ onion routers,
-$\mathcal{P}\triangleq\{o_1,\dots
-,o_n\}\subset\mathcal{O}$ for a user to communicate through. Given $\mathcal{P}$, the sender sends
+$\mathcal{P}\triangleq\{o_1,\dots ,o_n\}\subseteq\mathcal{O}$
+for a user to communicate through. Given $\mathcal{P}$, the sender sends
 his message to $o_1$, who relays the message to $o_2$, and so on, until $o_n$ receives the message
 and forwards it to the destination. Therefore, no intermediate node in $\mathcal{P}$ communicates
 with both the sender and the receiver of a given message, assuming $n > 1$ (note that, for $n=1$,
@@ -84,6 +103,7 @@ messages in such a way that all routers in $\mathcal{P}$ can only know the addre
 before it and the server after it in the message's path. This prevents any router or observer from
 gaining full knowledge of $\mathcal{P}$, which effectively hides the endpoints of a communication
 channel.\\\\
+
 It is up to the designer of the Onion Routing Protocol to come up with a way of designing the
 encryption scheme that hides $\mathcal{P}$ from observers. Ultimately, this scheme will be the
 backbone of the security of the protocol. In the implementation described in this report, this was
@@ -123,12 +143,12 @@ this.\\\\
 All in all, the Onion Routing scheme ideally provides some drastic improvements to the VPN scheme
 with respect to security:
 \begin{enumerate}
-	\item The virtual circuit establishment phase eliminates the possibility of any router or
-		observer directly knowing both the sender and destination of a message
-	\item A large amount of available onion routers on the network provides severe difficulty of
-		guessing a message path
-	\item If there is lots of traffic in the network, it is infeasible for an observer to try to
-		trace the path of a message
+    \item The virtual circuit establishment phase eliminates the possibility of any router or
+        observer directly knowing both the sender and destination of a message
+    \item A large amount of available onion routers on the network provides severe difficulty of
+        guessing a message path
+    \item If there is lots of traffic in the network, it is infeasible for an observer to try to
+        trace the path of a message
 \end{enumerate}
 Therefore, Onion Routing is a very promising technique for providing complete anonymity of a
 communication channel. However, it is also a drastically more complex protocol then communicating
@@ -142,8 +162,15 @@ encryption or decryption will be observed. Although the Onion Routing protocol i
 remains to be seen if it is powerful enough for practical use. This report aims to determine if the
 proposed Onion Routing scheme can be used in practice, and will provide discussion concerning the
 cost of improving its practicality and the practicality of anonymous communication altogether.
+
+
+\chapter{Methodology}
+
+Blah Blah
+
+
 \chapter{Results}
-Our onion router network has the following implemented: 
+Our onion router network has the following implemented:
 \begin{enumerate}
     \item Directory node: Responsible for the specifying a path/ series of router nodes to pass through when a message is sent and to also send the respective keys for the routers
     \item Onion router node: Responsible for peeling and encrypting messages depending if the message is in the forward or backward channel. Depending on how the routers are placed in a path, when a message is sent from one router to another, the receiver will send an acknowledgment message to confirm it has received the correct message.
@@ -161,122 +188,125 @@ Along the essential features implemented, out onion network also included the fo
     \item Multiple users/clients: Once the onion network has been set up, it is capable of handling more than just one user/client. To show this feature, the first client must set up the whole network. Afterwards, anyone else simply has to set up a client node and they will be one the same network that the first client set up. All clients on this node will be able to send messages without any interruptions or errors occurring.
     \item Message size of 833 characters and encryption padding:
     \begin{enumerate}
-        \item The maximum message size that can be sent in our network is 833 characters, this can be easily changed by simply modifying a small portion of the code. 
+        \item The maximum message size that can be sent in our network is 833 characters, this can be easily changed by simply modifying a small portion of the code.
         \item The message size also correlates to another feature of encryption. Our goal was to make it more difficult for an outside observer to be able to distinguish who is the destination and who is the originator by keeping the message at a constant size. In order to do see every time a layer of encryption is peeled away, our application will add a layer of padding such that it is difficult to see when it may arrive at the originiator.
     \end{enumerate}
 \end{enumerate}
 
+
 \part*{Appendices}
 \addcontentsline{toc}{part}{Appendices}
 \begin{appendix}
-	\chapter{A Brief Conspectus of Cryptography}
-	The Onion Routing protocol described in this report makes extensive use of cryptography for
-	encrypting and decrypting sensitive data. Encryption is the process of obscuring data in such a
-	way that only the intended recipient of the data may read the data, via decryption. In order for
-	this to be accomplished, the sender and the receiver of the data use calculated \textit{keys},
-	which are similar in purpose to passwords, to compute the scrambled data and to retrieve the
-	unscrambled data. Two main paradigms for achieving encryption and decryption are used in this
-	implementation, and will be described below.
-	\section{Terminology}
-	The list below describes some terms related to cryptography that may be used sporadically in the
-	report.
-	\begin{itemize}
-		\item \textbf{Plaintext}: Regular text that has not been encrypted.
-		\item \textbf{Ciphertext}: Scrambled, incomprehensible text that is the product of
-			encryption. Must be \textit{decrypted} to be understood.
-		\item \textbf{Encryption}: The calculated process of scrambling data to create ciphertext in
-			such a way that it can be unscrambled only by a desired party.
-		\item \textbf{Decryption}: The process of unscrambling ciphertext into plaintext.
-		\item \textbf{Key}: A byte string that ultimately cryptographically identifies a
-			communicating party, which is used to encrypt and/or decrypt data.
-	\end{itemize}
-	\section{Symmetric Cryptography}
-	The simpler form of cryptography that will be used is called ``Symmetric Cryptography", and is
-	characterized by the notion of the sender and receiver sharing a secret key, called a symmetric
-	key. The scheme is defined by the tuple $(\kgen,\enc,\dec)$. The $\kgen$ parameter is pseudorandom
-	generator that generates a key $k\in\mathcal{K}$ with uniform probability over $\mathcal{K}$,
-	where $\mathcal{K}$ is the keyspace, or the set of all keys. $\enc,\dec$ are families of
-	functions, where $\enc_k: \mathcal{M}\rightarrow\mathcal{C}$ and $\dec_k:
-	\mathcal{C}\rightarrow\mathcal{M}$ are encryption and decryption functions for some key
-	$k\in\mathcal{K}$, $\mathcal{M}$ is the message space (set of all possible messages), and
-	$\mathcal{C}$ is the ciphertext space (set of all possible ciphertexts). Symmetric schemes are
-	called symmetric because encryption and decryption are both done using the same key, so for all
-	messages $m\in\mathcal{M}$,
-	\begin{equation}
-		\dec_k(\enc_k(m)) = m
-	\end{equation}
-	This property is crucial for providing bidirectional encrypted communication without revealing
-	the message's route, so symmetric encryption and decryption is a primary function of the onion
-	routers. Furthermore, symmetric key encryption and decryption are asymptotically much faster
-	than their asymmetric counterparts \cite{SymmetricVsAsymmetric} (described in the next section).
-	The downside, of course, is that establishing a shared secret key and keeping it secret may be
-	difficult.\\\\
-	The symmetric cryptography scheme that will be used in the Onion Routing
-	implementation described in this report is called Advanced Encryption Standard (AES) \cite{AES}.
-	The 128-bit key variant is used for ease of development, especially in the testing phase, but
-	the \texttt{stealth} library developed for this implementation provides accomodations for easily
-	changing the key size to 192- or 256-bit keys. It is generally frowned-upon to manually
-	implement cryptographic schemes, as it is always preferable to use libraries that have been
-	thoroughly tested and validated. The \href{https://www.dlitz.net/software/pycrypto/}{PyCrypto}
-	library was used to provide primitive AES encryption and decryption, as well as
-	cryptographically-secure random key generation, in this implementation.
-	\section{Asymmetric Cryptography}
-	Although symmetric cryptography certainly has its benefits, it requires two parties to share a
-	secret key, which may not be easily done, especially if the key must be communicated over a
-	network. Asymmetric cryptography solves this issue, though it has issues of its own which will
-	be described soon.\\\\
-	Instead of two parties sharing a shared secret key as in symmetric cryptography, asymmetric
-	cryptography schemes give each party both a \textit{private key} and a \textit{public key}. As
-	the names suggest, the public key can be known by anyone, but the private key should be kept
-	secret. Note however that although the private key must remain secret, it is not shared by
-	anyone, which removes the main drawback of symmetric encryption. Like symmetric encryption,
-	asymmetric encryption schemes are defined by $(\kgen,\enc,\dec)$, with
-	$\enc_{pub}:\mathcal{M}\rightarrow\mathcal{C}$ and
-	$\dec_{priv}:\mathcal{C}\rightarrow\mathcal{M}$. The encryption/decryption process has the
-	following property:
-	\begin{equation}
-		\dec_{f(k)}(\enc_{k}(m)) = m
-	\end{equation}
-	In equation (A.2), $k$ is the public key, and $f(k)$ yields the private key. Asymmetric
-	cryptography is only effective if computing $f(k)$ is an $\NP$ problem -- that is to say,
-	computing $f(k)$ is computationally infeasible. Given this property, if user $\mathcal{A}$ wants
-	to send an encrypted message to $\mathcal{B}$, user $\mathcal{A}$ encrypts the message with user
-	$\mathcal{B}$'s public key (which is publicly-known), and then $\mathcal{B}$ may decrypt the
-	message using its private key. Since $f(k)$ is computationally intractible, the probability of
-	someone other than $\mathcal{B}$ decrypting the message is negligible.\\\\
-	In the implementation of Onion Routing discussed in this report, asymmetric cryptography is used
-	to communicate symmetric keys. Since public keys are publicly-known, the sender knows how to
-	send encrypted messages to any onion router without needing a shared secret key. Therefore,
-	asymmetric cryptography allows the sender to share symmetric keys without anyone aside from the
-	desired router being able to see the symmetric key.\\\\
-	Although asymmetric cryptography does provide some incredible benefits, it also has its
-	drawbacks. Firstly, asymmetric encryption and decryption is relatively slow
-	\cite{SymmetricVsAsymmetric}, so it is beneficial to reduce the frequency of its use as much as
-	possible without comprimising the security of the system. Furthermore, in some applications,
-	such as the main purpose of onion routers, for example, it may be necessary to send encrypted
-	\textit{and} decrypted messages over the network. In this scenario, asymmetric cryptography
-	cannot be used. In the case of the onion routers, they must encrypt response messages before
-	forwarding them back towards the sender. Since the sender does not know the onion routers'
-	private keys, the sender cannot decrypt the response! Therefore, clearly asymmetric encryption
-	cannot be used in some scenarios.\\\\
-	The cryptographic scheme that is used in the Onion Routing implementation presented in this
-	report is called RSA \cite{RSA}. As in the case of symmetric cryptography, it is always
-	preferred to use trusted libraries for implementing asymmetric cryptography. The
-	\href{https://www.dlitz.net/software/pycrypto/}{PyCrypto} library also implements the RSA
-	cryptosystem, and it was used in the implementation described in this report.
-	\chapter{List of External Resources}
-	Several external, third party resources were used in the implementation described in this
-	report. Below is a list of these resources, as well as references to where they can be
-	found/downloaded and descriptions of what they were used for.\\\\
-	\begin{tabular}{|c|c|c|}
-		\hline
-		\textbf{Resource} & \textbf{Origin} & \textbf{Reason for Use}\\\hline
-		PyCrypto python library & \url{https://www.dlitz.net/software/pycrypto/} & \makecell{AES
-		encryption/decryption,\\RSA encryption/decryption,\\importing and exporting of RSA keys,\\random
-		byte string generation,\\pseudorandom number generators}\\\hline
-	\end{tabular}
+    \chapter{A Brief Conspectus of Cryptography}
+    The Onion Routing protocol described in this report makes extensive use of cryptography for
+    encrypting and decrypting sensitive data. Encryption is the process of obscuring data in such a
+    way that only the intended recipient of the data may read the data, via decryption. In order for
+    this to be accomplished, the sender and the receiver of the data use calculated \textit{keys},
+    which are similar in purpose to passwords, to compute the scrambled data and to retrieve the
+    unscrambled data. Two main paradigms for achieving encryption and decryption are used in this
+    implementation, and will be described below.
+    \section{Terminology}
+    The list below describes some terms related to cryptography that may be used sporadically in the
+    report.
+    \begin{itemize}
+        \item \textbf{Plaintext}: Regular text that has not been encrypted.
+        \item \textbf{Ciphertext}: Scrambled, incomprehensible text that is the product of
+            encryption. Must be \textit{decrypted} to be understood.
+        \item \textbf{Encryption}: The calculated process of scrambling data to create ciphertext in
+            such a way that it can be unscrambled only by a desired party.
+        \item \textbf{Decryption}: The process of unscrambling ciphertext into plaintext.
+        \item \textbf{Key}: A byte string that ultimately cryptographically identifies a
+            communicating party, which is used to encrypt and/or decrypt data.
+    \end{itemize}
+    \section{Symmetric Cryptography}
+    The simpler form of cryptography that will be used is called ``Symmetric Cryptography", and is
+    characterized by the notion of the sender and receiver sharing a secret key, called a symmetric
+    key. The scheme is defined by the tuple $(\kgen,\enc,\dec)$. The $\kgen$ parameter is pseudorandom
+    generator that generates a key $k\in\mathcal{K}$ with uniform probability over $\mathcal{K}$,
+    where $\mathcal{K}$ is the keyspace, or the set of all keys. $\enc,\dec$ are families of
+    functions, where $\enc_k: \mathcal{M}\rightarrow\mathcal{C}$ and $\dec_k:
+    \mathcal{C}\rightarrow\mathcal{M}$ are encryption and decryption functions for some key
+    $k\in\mathcal{K}$, $\mathcal{M}$ is the message space (set of all possible messages), and
+    $\mathcal{C}$ is the ciphertext space (set of all possible ciphertexts). Symmetric schemes are
+    called symmetric because encryption and decryption are both done using the same key, so for all
+    messages $m\in\mathcal{M}$,
+    \begin{equation}
+        \dec_k(\enc_k(m)) = m
+    \end{equation}
+    This property is crucial for providing bidirectional encrypted communication without revealing
+    the message's route, so symmetric encryption and decryption is a primary function of the onion
+    routers. Furthermore, symmetric key encryption and decryption are asymptotically much faster
+    than their asymmetric counterparts \cite{SymmetricVsAsymmetric} (described in the next section).
+    The downside, of course, is that establishing a shared secret key and keeping it secret may be
+    difficult.\\\\
+    The symmetric cryptography scheme that will be used in the Onion Routing
+    implementation described in this report is called Advanced Encryption Standard (AES) \cite{AES}.
+    The 128-bit key variant is used for ease of development, especially in the testing phase, but
+    the \texttt{stealth} library developed for this implementation provides accomodations for easily
+    changing the key size to 192- or 256-bit keys. It is generally frowned-upon to manually
+    implement cryptographic schemes, as it is always preferable to use libraries that have been
+    thoroughly tested and validated. The \href{https://www.dlitz.net/software/pycrypto/}{PyCrypto}
+    library was used to provide primitive AES encryption and decryption, as well as
+    cryptographically-secure random key generation, in this implementation.
+    \section{Asymmetric Cryptography}
+    Although symmetric cryptography certainly has its benefits, it requires two parties to share a
+    secret key, which may not be easily done, especially if the key must be communicated over a
+    network. Asymmetric cryptography solves this issue, though it has issues of its own which will
+    be described soon.\\\\
+    Instead of two parties sharing a shared secret key as in symmetric cryptography, asymmetric
+    cryptography schemes give each party both a \textit{private key} and a \textit{public key}. As
+    the names suggest, the public key can be known by anyone, but the private key should be kept
+    secret. Note however that although the private key must remain secret, it is not shared by
+    anyone, which removes the main drawback of symmetric encryption. Like symmetric encryption,
+    asymmetric encryption schemes are defined by $(\kgen,\enc,\dec)$, with
+    $\enc_{pub}:\mathcal{M}\rightarrow\mathcal{C}$ and
+    $\dec_{priv}:\mathcal{C}\rightarrow\mathcal{M}$. The encryption/decryption process has the
+    following property:
+    \begin{equation}
+        \dec_{f(k)}(\enc_{k}(m)) = m
+    \end{equation}
+    In equation (A.2), $k$ is the public key, and $f(k)$ yields the private key. Asymmetric
+    cryptography is only effective if computing $f(k)$ is an $\NP$ problem -- that is to say,
+    computing $f(k)$ is computationally infeasible. Given this property, if user $\mathcal{A}$ wants
+    to send an encrypted message to $\mathcal{B}$, user $\mathcal{A}$ encrypts the message with user
+    $\mathcal{B}$'s public key (which is publicly-known), and then $\mathcal{B}$ may decrypt the
+    message using its private key. Since $f(k)$ is computationally intractible, the probability of
+    someone other than $\mathcal{B}$ decrypting the message is negligible.\\\\
+    In the implementation of Onion Routing discussed in this report, asymmetric cryptography is used
+    to communicate symmetric keys. Since public keys are publicly-known, the sender knows how to
+    send encrypted messages to any onion router without needing a shared secret key. Therefore,
+    asymmetric cryptography allows the sender to share symmetric keys without anyone aside from the
+    desired router being able to see the symmetric key.\\\\
+    Although asymmetric cryptography does provide some incredible benefits, it also has its
+    drawbacks. Firstly, asymmetric encryption and decryption is relatively slow
+    \cite{SymmetricVsAsymmetric}, so it is beneficial to reduce the frequency of its use as much as
+    possible without comprimising the security of the system. Furthermore, in some applications,
+    such as the main purpose of onion routers, for example, it may be necessary to send encrypted
+    \textit{and} decrypted messages over the network. In this scenario, asymmetric cryptography
+    cannot be used. In the case of the onion routers, they must encrypt response messages before
+    forwarding them back towards the sender. Since the sender does not know the onion routers'
+    private keys, the sender cannot decrypt the response! Therefore, clearly asymmetric encryption
+    cannot be used in some scenarios.\\\\
+    The cryptographic scheme that is used in the Onion Routing implementation presented in this
+    report is called RSA \cite{RSA}. As in the case of symmetric cryptography, it is always
+    preferred to use trusted libraries for implementing asymmetric cryptography. The
+    \href{https://www.dlitz.net/software/pycrypto/}{PyCrypto} library also implements the RSA
+    cryptosystem, and it was used in the implementation described in this report.
+    \chapter{List of External Resources}
+    Several external, third party resources were used in the implementation described in this
+    report. Below is a list of these resources, as well as references to where they can be
+    found/downloaded and descriptions of what they were used for.\\\\
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{Resource} & \textbf{Origin} & \textbf{Reason for Use}\\\hline
+        PyCrypto python library & \url{https://www.dlitz.net/software/pycrypto/} & \makecell{AES
+        encryption/decryption,\\RSA encryption/decryption,\\importing and exporting of RSA keys,\\random
+        byte string generation,\\pseudorandom number generators}\\\hline
+    \end{tabular}
 \end{appendix}
+
 \bibliographystyle{ieeetr}
 \bibliography{sources}
 \addcontentsline{toc}{part}{Bibliography}
+
 \end{document}
