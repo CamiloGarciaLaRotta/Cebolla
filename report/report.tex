@@ -5,6 +5,7 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{listings}
 \usepackage{graphicx}
+\graphicspath{ {images/} }
 \usepackage{hyperref}
 \usepackage[toc,page]{appendix}
 \usepackage{color}
@@ -30,26 +31,27 @@
     citecolor=dyellow,
 }
 
-\title{
-    Onion Routing: A Quest for Internet Anonymity\\and Perhaps also for Unparalleled Brilliance
-}
-
-\author{
-    Camilo Garcia La Rotta\\(PUT ID HERE) \and
-    Dennis Liu\\(PUT ID HERE) \and
-    Stuart Mashaal\\(260639962) \and
-    Spiros-Daniel Mavroidakos\\(260689391) \and
-    Jastaj Virdee\\(PUT ID HERE) \and
-    Harley Wiltzer\\(260690006) \and
-    Edward Zhao\\(260690376)\\\\
-}
-
-\date{December 6, 2017}
-
 \begin{document}
 
 \begin{titlepage}
-    \maketitle
+    \begin{center}
+        \includegraphics[width=0.15\textwidth]{images/McGill.pdf}~\par\vspace{1cm}
+        {\scshape\LARGE McGill University \par}
+        \vspace{1cm}
+        {\huge\bfseries Onion Routing: A Quest for Internet Anonymity, and Perhaps also Unparalleled Brilliance\par}
+        \vspace{1.5cm}
+        {\Large ECSE 414 Final Report\par}
+        \vspace{2cm}
+        {\Large Camilo Garcia La Rotta (260657037)\\}
+        {\Large Dennis Liu (PUT ID HERE)\\}
+        {\Large Stuart Mashaal (260639962)\\}
+        {\Large Spiros-Daniel Mavroidakos (260689391)\\}
+        {\Large Jastaj Virdee (260689027)\\}
+        {\Large Harley Wiltzer (260690006)\\}
+        {\Large Edward Zhao (260690376)\\}
+        \vfill
+        {\large \today\par}
+    \end{center}
 \end{titlepage}
 
 \tableofcontents
@@ -65,7 +67,8 @@ field of cryptography, so that only the trusted source may be able to unscramble
 effectively read) the message that was sent. But what if this communication was so sensitive that it
 is even desired that no arbitrary observer should even know that the source and trusted destination
 are communicating with each other? This presents another interesting problem that goes beyond
-cryptography -- in fact, it may only be solved by the design of a clever communication protocol.\\\\
+cryptography -- in fact, it may only be solved by the design of a clever communication protocol.\\
+
 The desire to participate in anonymous communication over the Internet is quite popular nowadays,
 and many choose to accomplish this by communicating through a Virtual Private Network (VPN). This
 works by sending all messages through an intermediate server, so that observers can only see that
@@ -79,7 +82,7 @@ of a message, there is one party that may retain this information, and that is t
 server itself. Users of VPN services must trust that the owner of the VPN server has no malicious
 intentions, and does not, for example, keep logs of the packets it receives. Although many users may
 trust the VPN servers they use, it is important to note that the VPN service does not, in fact,
-provide complete anonymity.\\\\
+provide complete anonymity.\\
 
 This report will explore and provide details of the implementation of the Onion Routing protocol, a
 method of communication that was shown to provide complete anonymity \cite{FormalTreatment}. Onion
@@ -102,14 +105,86 @@ forwards to the destination! Thankfully, Onion Routing solves this issue by laye
 messages in such a way that all routers in $\mathcal{P}$ can only know the address of the server
 before it and the server after it in the message's path. This prevents any router or observer from
 gaining full knowledge of $\mathcal{P}$, which effectively hides the endpoints of a communication
-channel.\\\\
+channel.\\
 
 It is up to the designer of the Onion Routing Protocol to come up with a way of designing the
 encryption scheme that hides $\mathcal{P}$ from observers. Ultimately, this scheme will be the
 backbone of the security of the protocol. In the implementation described in this report, this was
 accomplished by an elegant virtual circuit establishment procedure, which was inspired by a
 establishment process suggested by Reed, Syverson, and Goldschlag \cite{OnionRoutingPatent} but
-heavily modified, as will be described later on in the report. Reed, Syverson, and Goldschlag
+heavily modified, as will be described later on in the report.\\
+
+All in all, the Onion Routing scheme ideally provides some drastic improvements to the VPN scheme
+with respect to security:
+\begin{enumerate}
+    \item The virtual circuit establishment phase eliminates the possibility of any router or
+        observer directly knowing both the sender and destination of a message
+    \item A large amount of available onion routers on the network provides severe difficulty of
+        guessing a message path
+    \item If there is lots of traffic in the network, it is infeasible for an observer to try to
+        trace the path of a message
+\end{enumerate}
+Therefore, Onion Routing is a very promising technique for providing complete anonymity of a
+communication channel. However, it is also a drastically more complex protocol then communicating
+through a VPN, for example. The added complexity may cause many considerable design challenges,
+performance reductions, and practical limitations, which may ultimately affect its feasibility.\\
+
+The remainder of this report will describe the implementation details of such a protocol, and will
+discuss the design challenges that were faced. Furthermore, a thorough \textit{expos\'e} of the
+limitations of the protocol, as well as the costs of mitigating these limitations, will be given.
+Moreover, performance details such as the added delay imposed by multiple intermediate routers and
+encryption or decryption will be observed. Although the Onion Routing protocol is promising, it
+remains to be seen if it is powerful enough for practical use. This report aims to determine if the
+proposed Onion Routing scheme can be used in practice, and will provide discussion concerning the
+cost of improving its practicality and the practicality of anonymous communication altogether.
+
+
+\chapter{Methodology}
+Onion Routing is a general enough concept that particular implementations of it must, on
+their own, make and incorporate many design choices about communication protocol and software
+architecture.  For this reason, this section of the report serves to explore the technical
+details of this implementation's protocol and architecture, as well as explain, where
+applicable, the design choices behind these details.
+
+\section{Protocol Design}
+Say some sender $\mathcal{S}$ wishes to send a message to some recipient $\mathcal{R}$
+through this implementation of an onion routing network $\mathcal{O}$.  First, $\mathcal{S}$
+must establish a virtual circuit through $\mathcal{O}$ over which to communicate with
+$\mathcal{R}$.  Establishing this virtual circuit is a two step process as follows:
+\begin{enumerate}
+    \item Acquire a path $\mathcal{P}$ from the \textit{directory node} $\mathcal{D}$
+    \item Negotiate symmetric encryption keys with each node $o_i \in \mathcal{P}$
+\end{enumerate}
+Once $\mathcal{S}$ has established $\mathcal{P}$ in $\mathcal{O}$, it can then wrap a message $M$
+intended for $\mathcal{R}$ in an \textit{onion} before sending the onion through $\mathcal{P}$ to
+$\mathcal{R}$.  The exact details of the onion data structure will be illucidated shortly, but for
+now it shall suffice to say that an onion is a message that is incrementally encrypted by $\mathcal{S}$
+such that each node $o_i$ can decrypt the message before passing it along to $o_{i+1}$.\\
+
+To begin the circuit establishment process, $\mathcal{S}$ must acquire $\mathcal{P}$ from
+$\mathcal{D}$.  However, it must do so securely so that no observer can know $\mathcal{P}$.
+Fortunately, $\mathcal{D}$, just like every onion router in $\mathcal{O}$, has an assymetric
+keypair $(\mathit{pub}_\mathcal{D}, \mathit{priv}_\mathcal{D})$.  So, $\mathcal{S}$ generates a
+random symmetric key $\mathit{sym}_{\mathcal{S},\mathcal{D}}$ for $\mathcal{D}$ to use to encrypt
+the path $\mathcal{P}$ that will be its response to $\mathcal{S}$.  $\mathcal{S}$ then encrypts
+$\mathit{sym}_{\mathcal{S},\mathcal{D}}$ with $\mathit{pub}_\mathcal{D}$ and sends that to
+$\mathcal{D}$.  $\mathcal{D}$ then decrypts with $\mathit{priv}_\mathcal{D}$ so that now both
+$\mathcal{S}$ and $\mathcal{D}$ share $\mathit{sym}_{\mathcal{S},\mathcal{D}}$.  Now that it shares
+a symmetric key with $\mathcal{S}$, $\mathcal{D}$ constructs a path $\mathcal{P}$, uses
+$\mathit{sym}_{\mathcal{S},\mathcal{D}}$ to encrypt a message containing $\mathcal{P}$ and sends
+the encrypted message to $\mathcal{S}$.  To complete its path acquisition, $\mathcal{S}$ decrypts
+$\mathcal{D}$'s response to get $\mathcal{P}$.\\
+
+Having finished acquiring $\mathcal{P}$ from $\mathcal{D}$, $\mathcal{S}$ can move on to step 2 of the
+circuit-establishment process: negotiating symmetric keys with each node $o_i \in \mathcal{P}$.
+$\mathcal{S}$ negotiates symmetric keys with all $o_i \in \mathcal{P}$ just as it did with $\mathcal{D}$:
+by generating the symmetric key randomly and then encrypting it with its recipient's public key before
+sending it.\\
+
+The unit of communication is the so called ‘onion’. It is a data structure that contains the client’s message wrapped in successive layers of encryption.
+Its creation is handled by the Client node at the sending stage. At the reply stage the plain response is iteratively encrypted as it traverses the nodes in the path back to the original sender.\\
+
+Reed, Syverson, and Goldschlag
 suggested a separate Onion Routing process for establishing the connections between all routers
 involves in a communication channel \cite{OnionRoutingPatent,HidingRoutingInformation}, which was a
 very practical implementation idea that drastically simplified the routing of data messages and
@@ -134,42 +209,43 @@ decrypt forward-propagating messages (message towards the destination) with thei
 that the intermediate routers cannot read the message that is being sent, and observers cannot trace
 a given message across the onion network. When the message's receiver sends back a response, all
 intermediate nodes encrypt the backward-propagating message with their symmetric keys before sending
-the message back towards the sender, which similarly hides the data in the response message.\\\\
+the message back towards the sender, which similarly hides the data in the response message.\\
+
 In a favorable scenario, $|\mathcal{O}|$ is very large, and the amount of communication channels
 throughout the onion network is also very large. This provides even more security, as it makes
 things extremely difficult for observers to deduce the path of a message in the network. As the
 traffic in the network gets greater, it becomes practically infeasible for an observer to try to do
-this.\\\\
-All in all, the Onion Routing scheme ideally provides some drastic improvements to the VPN scheme
-with respect to security:
-\begin{enumerate}
-    \item The virtual circuit establishment phase eliminates the possibility of any router or
-        observer directly knowing both the sender and destination of a message
-    \item A large amount of available onion routers on the network provides severe difficulty of
-        guessing a message path
-    \item If there is lots of traffic in the network, it is infeasible for an observer to try to
-        trace the path of a message
-\end{enumerate}
-Therefore, Onion Routing is a very promising technique for providing complete anonymity of a
-communication channel. However, it is also a drastically more complex protocol then communicating
-through a VPN, for example. The added complexity may cause many considerable design challenges,
-performance reductions, and practical limitations, which may ultimately affect its feasibility.\\\\
-The remainder of this report will describe the implementation details of such a protocol, and will
-discuss the design challenges that were faced. Furthermore, a thorough \textit{expos\'e} of the
-limitations of the protocol, as well as the costs of mitigating these limitations, will be given.
-Moreover, performance details such as the added delay imposed by multiple intermediate routers and
-encryption or decryption will be observed. Although the Onion Routing protocol is promising, it
-remains to be seen if it is powerful enough for practical use. This report aims to determine if the
-proposed Onion Routing scheme can be used in practice, and will provide discussion concerning the
-cost of improving its practicality and the practicality of anonymous communication altogether.
+this.\\
 
+\noindent Say a Client wishes to send its traffic through a random ordered set of onion routers.
+First it must determine which routers will participate in its virtual circuit, and then it must set up a secure communications channel through them.
+It delegates the task of router selection to the Directory Node.  When asked to do so by a Client, the Directory Node will construct a random ordered list of onion routers and their associated crypto keys.
+The Client will then receive this list of routers and their crypto keys, and will use it to incrementally establish the secure channel through the routers in the list.
+After it receives the acknowledgement from the three router nodes in the path it proceeds to create the data Onion such that the first node can “peel” the first encryption layer and so on.\\
 
-\chapter{Methodology}
+\noindent From the perspective of the routers, the communication establishment process begins with receiving a symmetric key encrypted with its public key.
+It decrypts the symmetric key using its private key and responds with an ACK the node that sent it the message, who passes the ACK back to the client.
+From this moment the router will set two separate threads, the first one will handle the backwards communication, the second one the forwards communication.
+From the Destination’s perspective, all received messages are in plain text and it will respond to all its parallel open TCP connections back in plain text.
+It is up to the Routers on the path to successively encrypt the reply Onion until it reaches the Client. Who can the peel them off in forward order with the symmetric keys obtained from the circuit establishment.
 
-Blah Blah
+\section{Architecture and Implementation}
+We leveraged Python’s socket and Threading library to avoid having to implement the lower level requirements of this project.
+The nodes that comprise the Onion network are: the Directory, the Router, the Client and the Destination.
+The directory and the router nodes sit in the inside of the network, only listening on predefined ports.
+Whereas the client and the destination sit on the edge of the network, being able to communicate on other ports.
+All the nodes in the network are multithreaded to support multiple parallel communication between different clients, destination pairs.
+The Directory node keeps track of participant router nodes and generates a random path of 3 nodes whenever a client node wishes to communicate through the network.
+The router node has 2 primordial function: to pass along the path a setup onion and to handle the bidirectional transfer of onions to the next and prior node in the path.
+The destination, nicknamed dummy destination, has the sole purpose of responding to any incoming message on an arbitrarily selected port.
+The client acts as the command line interface for the client using the network. Given a destination it will request a path from the Directory, setup the virtual circuit and build the onion to send to the destination.
+All the nodes on the network use a custom-made library for encryption, wich we named Stealth and provides convenient object for symmetric and asymmetric encryption.
+This implementation of the onion router is built upon TCP communication and relies on a globally defined socket for all internal nodes.\\
 
 
 \chapter{Results}
+\section{Nodes}
+MAYBE THIS SECTION SHOULD BE IN METHODOLOGY???\\
 Our onion router network has the following implemented:
 \begin{enumerate}
     \item Directory node: Responsible for the specifying a path/ series of router nodes to pass through when a message is sent and to also send the respective keys for the routers
@@ -182,16 +258,42 @@ Our onion router network has the following implemented:
     \end{enumerate}
     \item Destination node: This is the node that will receive the complete message also send back a confirmation message in the backward channel. This message will have a layer of encryption added on at every onion router node until it has reached the client node to be decrypted
 \end{enumerate}
+\section{Multiple Users}
+    Once the onion network has been set up, it is capable of handling more than just one user/client. To show this feature, the first client must set up the whole network. Afterwards, anyone else simply has to set up a client node and they will be one the same network that the first client set up. All clients on this node will be able to send messages without any interruptions or errors occurring.
 
-Along the essential features implemented, out onion network also included the following features :
-\begin{enumerate}
-    \item Multiple users/clients: Once the onion network has been set up, it is capable of handling more than just one user/client. To show this feature, the first client must set up the whole network. Afterwards, anyone else simply has to set up a client node and they will be one the same network that the first client set up. All clients on this node will be able to send messages without any interruptions or errors occurring.
-    \item Message size of 833 characters and encryption padding:
+\section{Message Size}
     \begin{enumerate}
         \item The maximum message size that can be sent in our network is 833 characters, this can be easily changed by simply modifying a small portion of the code.
         \item The message size also correlates to another feature of encryption. Our goal was to make it more difficult for an outside observer to be able to distinguish who is the destination and who is the originator by keeping the message at a constant size. In order to do see every time a layer of encryption is peeled away, our application will add a layer of padding such that it is difficult to see when it may arrive at the originiator.
     \end{enumerate}
-\end{enumerate}
+\section{Round Trip Time of Messages}
+Although the use of onion routing increases security and anonymity, there is a concern regarding the time needed for a message to be send and received. The reason for this is instead of the message going from the client to destination and back, it must now also pass through several other nodes. Another reason why timing may be a concern is the fact that the encrypting and decrypting process may take some time.\\\\
+To go about determining whether the onion routing system took a long time to send and receive messages, we compared the timing taken by the onion routing system and checked whether it was noticeably longer than the timing of a normal TCP connection.\\\\
+To compute the average time taken by the onion routing system to send and receive a message, the code of the system was edited so that it would print the times corresponding to when the message was sent and received. The sent time was then subtracted from the received time to determine how long it took for the message to reach the destination and return to the client. Ten messages were sent, and the average was taken of these times to determine the average time taken by the onion routing system. The messages were of various sizes to ensure a more complete testing.\\\\
+To compute the average time taken by a normal TCP connection, a simple python script was created to send messages from a client to a destination. This was the script "TCPClient.py" shown in THE TEXTBOOK. However this script was edited so that it also printed the times where the messages were sent and received. Once again ten messages were sent, and the average was computed of these ten times. The ten messages that were sent were the exact same as the 10 messages that were sent on the onion network. This was to ensure that the only variable determining the average time was the type of connection (onion vs. TCP).\\\\
+The following graph and table demonstrate the data collected:
+\begin{center}
+    \begin{tabular}{|c|c|c|}
+    \hline
+    Message & RTT TCP & RTT Onion \\
+    \hline
+    hi & 0.000942 &    0.004191 \\
+    hello &    0.000875 & 0.004517 \\
+    hello world & 0.000814 & 0.004243 \\
+    hello newman. Jerry & 0.001639 & 0.004739 \\
+    hello how are you & 0.00202 & 0.004359 \\
+    bye & 0.001519 & 0.004865 \\
+    hello how are? Good thanks how are you? & 0.001353 & 0.00534 \\
+    hi & 0.001274 & 0.004572 \\
+    $\langle$alphabet$\rangle$ & 0.00089 & 0.00501 \\
+    $\langle$alphabet x3$\rangle$ & 0.00081 & 0.004543 \\
+    \hline
+    Average & 0.0012136 & 0.0046379 \\
+    \hline
+    \end{tabular}
+\end{center}
+ADD EXCEL GRAPH\\
+As one can see the difference between the round trip time of the onion system and the normal TCP system is about 3 milliseconds. This is not perceptible to humans so it can be confirmed that timing does not have to be sacrificed for the increased security and anonymity of the onion routing system.
 
 
 \part*{Appendices}
