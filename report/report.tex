@@ -148,11 +148,15 @@ applicable, the design choices behind these details.
 
 \section{Protocol Design}
 Say some sender $\mathcal{S}$ wishes to send a message to some recipient $\mathcal{R}$
-through this implementation of an onion routing network $\mathcal{O}$.  First, $\mathcal{S}$
+through our Onion Routing Network implementation $\mathcal{O}$.  First, $\mathcal{S}$
 must establish a virtual circuit through $\mathcal{O}$ over which to communicate with
-$\mathcal{R}$.  Establishing this virtual circuit is a two step process as follows:
+$\mathcal{R}$.  Reed, Syverson, and Goldschlag suggested a separate process for
+establishing the connections between all routers involved in a communication channel
+\cite{OnionRoutingPatent,HidingRoutingInformation}, which was a very practical implementation
+idea that drastically simplified the routing of data messages and elegantly streamlined our
+circuit establishment process we ended up with which is as follows:
 \begin{enumerate}
-    \item Acquire a path $\mathcal{P}$ from the \textit{directory node} $\mathcal{D}$
+    \item Acquire a path $\mathcal{P}$ from thx \textit{directory node} $\mathcal{D}$
     \item Negotiate symmetric encryption keys with each node $o_i \in \mathcal{P}$
 \end{enumerate}
 Once $\mathcal{S}$ has established $\mathcal{P}$ in $\mathcal{O}$, it can then wrap a message $M$
@@ -165,69 +169,43 @@ To begin the circuit establishment process, $\mathcal{S}$ must acquire $\mathcal
 $\mathcal{D}$.  However, it must do so securely so that no observer can know $\mathcal{P}$.
 Fortunately, $\mathcal{D}$, just like every onion router in $\mathcal{O}$, has an assymetric
 keypair $(\mathit{pub}_\mathcal{D}, \mathit{priv}_\mathcal{D})$.  So, $\mathcal{S}$ generates a
-random symmetric key $\mathit{sym}_{\mathcal{S},\mathcal{D}}$ for $\mathcal{D}$ to use to encrypt
-the path $\mathcal{P}$ that will be its response to $\mathcal{S}$.  $\mathcal{S}$ then encrypts
+random symmetric key $\mathit{sym}_{\mathcal{S},\mathcal{D}}$.  $\mathcal{D}$ will later use this to encrypt
+the path $\mathcal{P}$ that it will send to $\mathcal{S}$.  Next, $\mathcal{S}$ encrypts
 $\mathit{sym}_{\mathcal{S},\mathcal{D}}$ with $\mathit{pub}_\mathcal{D}$ and sends that to
 $\mathcal{D}$.  $\mathcal{D}$ then decrypts with $\mathit{priv}_\mathcal{D}$ so that now both
 $\mathcal{S}$ and $\mathcal{D}$ share $\mathit{sym}_{\mathcal{S},\mathcal{D}}$.  Now that it shares
 a symmetric key with $\mathcal{S}$, $\mathcal{D}$ constructs a path $\mathcal{P}$, uses
 $\mathit{sym}_{\mathcal{S},\mathcal{D}}$ to encrypt a message containing $\mathcal{P}$ and sends
 the encrypted message to $\mathcal{S}$.  To complete its path acquisition, $\mathcal{S}$ decrypts
-$\mathcal{D}$'s response to get $\mathcal{P}$.\\
+$\mathcal{D}$'s message to get $\mathcal{P}$.\\
 
 Having finished acquiring $\mathcal{P}$ from $\mathcal{D}$, $\mathcal{S}$ can move on to step 2 of the
 circuit-establishment process: negotiating symmetric keys with each node $o_i \in \mathcal{P}$.
 $\mathcal{S}$ negotiates symmetric keys with all $o_i \in \mathcal{P}$ just as it did with $\mathcal{D}$:
 by generating the symmetric key randomly and then encrypting it with its recipient's public key before
-sending it.\\
-
-The unit of communication is the so called ‘onion’. It is a data structure that contains the client’s message wrapped in successive layers of encryption.
-Its creation is handled by the Client node at the sending stage. At the reply stage the plain response is iteratively encrypted as it traverses the nodes in the path back to the original sender.\\
-
-Reed, Syverson, and Goldschlag
-suggested a separate Onion Routing process for establishing the connections between all routers
-involves in a communication channel \cite{OnionRoutingPatent,HidingRoutingInformation}, which was a
-very practical implementation idea that drastically simplified the routing of data messages and
-elegantly streamlined the implementation that will be shown. A \textit{m\'elange} of symmetric and
-asymmetric cryptography (see Appendix A) was used to securely establish virtual circuits. The
-virtual circuit establishment process consisted of generating symmetric keys $\{s_1,\dots,s_n\}$ and
-sending them to their respective onion routers encrypted with the desired onion router's public key,
-so that only the desired onion router may know its symmetric key. When an onion router receives its
-symmetric key, it maintains the connection through which the symmetric key was sent. The sender
-therefore sends $n$ successive public-key-encrypted symmetric keys, and sends them all through
-$o_1$ to avoid the scenario of an observer deducing $\mathcal{P}$ by watching where the sender is
-sending messages. The sender sends the public-key-encrypted $s_i$ keys encrypted successively with
-$s_{i-1},s_{i-2},\dots,s_2,s_1$, and each node in $\mathcal{P}$ decrypts with its symmetric key
-before forwarding the establishment message. This hides the location of $o_i$ until $o_{i-1}$
-receives the establishment message, at which point $o_{i-1}$ decrypts the last layer of symmetric
-encryption and makes a connection with $o_i$. Once all connections are made, there is no longer any
-need to send addressing information for data messages. Therefore, the suggested implementation does,
-in fact, provide secrecy of the path $\mathcal{P}$.\\\\
-As in the virtual circuit establishment, the sender encrypts the desired data message successively
-with the intermediate onion routers' symmetric keys when sending messages, and onion routers always
-decrypt forward-propagating messages (message towards the destination) with their symmetric keys, so
-that the intermediate routers cannot read the message that is being sent, and observers cannot trace
-a given message across the onion network. When the message's receiver sends back a response, all
-intermediate nodes encrypt the backward-propagating message with their symmetric keys before sending
-the message back towards the sender, which similarly hides the data in the response message.\\
+sending it.  To clarify, this means that for each onion router $o_i$ in $\mathcal{P}$:
+\begin{enumerate}
+    \item $\mathcal{S}$ randomly generates the symmetric key $\mathit{sym}_{\mathcal{S},o_i}$
+    \item $\mathcal{S}$ encrypts $\mathit{sym}_{\mathcal{S},o_i}$ with $\mathit{pub}_{o_i}$ and
+        sends that to $o_i$
+    \item $o_i$ decrypts with $\mathit{priv}_{o_i}$ to finally share $\mathit{sym}_{\mathcal{S},o_i}$ with
+        $\mathcal{S}$
+\end{enumerate}
+Notably, unlike key negotiation with $\mathcal{D}$, it is unaceptable for $\mathcal{S}$ to do key negotiation
+with each $o_i \in \mathcal{P}$ directly.  If $\mathcal{S}$ negotiates keys with each $o_i \in \mathcal{P}$
+directly, malicious observers can know the identities of all nodes $o_i \in \mathcal{P}$.  It was acceptable
+for observers to know that $\mathcal{S}$ was communicating with $\mathcal{D}$ because an Onion Routing
+Network does not (and maybe even cannot) attempt to hide the fact that $\mathcal{S}$ is trying to
+communicate through it, which is all that is revealed by observing $\mathcal{S}$'s communication with
+$\mathcal{D}$.  Conversely, the anonymity of the nodes $o_i \in \mathcal{P}$ is crucial to the correctness
+of the Onion Routing implementation; if all $o_i \in \mathcal{P}$ can be known to any observer of
+$\mathcal{S}$ or the network, then any observer can take note \\
 
 In a favorable scenario, $|\mathcal{O}|$ is very large, and the amount of communication channels
 throughout the onion network is also very large. This provides even more security, as it makes
 things extremely difficult for observers to deduce the path of a message in the network. As the
 traffic in the network gets greater, it becomes practically infeasible for an observer to try to do
 this.\\
-
-\noindent Say a Client wishes to send its traffic through a random ordered set of onion routers.
-First it must determine which routers will participate in its virtual circuit, and then it must set up a secure communications channel through them.
-It delegates the task of router selection to the Directory Node.  When asked to do so by a Client, the Directory Node will construct a random ordered list of onion routers and their associated crypto keys.
-The Client will then receive this list of routers and their crypto keys, and will use it to incrementally establish the secure channel through the routers in the list.
-After it receives the acknowledgement from the three router nodes in the path it proceeds to create the data Onion such that the first node can “peel” the first encryption layer and so on.\\
-
-\noindent From the perspective of the routers, the communication establishment process begins with receiving a symmetric key encrypted with its public key.
-It decrypts the symmetric key using its private key and responds with an ACK the node that sent it the message, who passes the ACK back to the client.
-From this moment the router will set two separate threads, the first one will handle the backwards communication, the second one the forwards communication.
-From the Destination’s perspective, all received messages are in plain text and it will respond to all its parallel open TCP connections back in plain text.
-It is up to the Routers on the path to successively encrypt the reply Onion until it reaches the Client. Who can the peel them off in forward order with the symmetric keys obtained from the circuit establishment.
 
 \section{Architecture and Implementation}
 We leveraged Python’s socket and Threading library to avoid having to implement the lower level requirements of this project.
