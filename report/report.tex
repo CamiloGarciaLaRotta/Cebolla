@@ -16,6 +16,7 @@
 \usepackage{titlesec}
 \usepackage{complexity}
 \usepackage{makecell}
+\usepackage{float}
 \usepackage[ff,primitives]{cryptocode}
 \usepackage[margin=2cm]{geometry}
 
@@ -355,9 +356,12 @@ The following graph and table demonstrate the data collected:
     \hline
     \end{tabular}
 \end{center}
-\begin{center}
-    \includegraphics[width=1\textwidth]{timingGraph.pdf}~\par\vspace{1cm}
-\end{center}
+\begin{figure}[H]
+	\caption{Round trip time of data through onion network compared to direct, unencrypted path}
+	\begin{center}
+		\includegraphics[width=\linewidth,trim={0cm 9cm 4cm 9.7cm},clip=true]{timingGraph.pdf}
+	\end{center}
+\end{figure}
 As one can see the difference between the round trip time of the onion system and the normal TCP system is about 3 milliseconds. This is not perceptible to humans so it can be confirmed that timing does not have to be sacrificed for the increased security and anonymity of the onion routing system.
 
 
