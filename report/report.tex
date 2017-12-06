@@ -36,7 +36,7 @@
 
 \begin{titlepage}
     \begin{center}
-        \includegraphics[width=0.15\textwidth]{images/McGill.pdf}~\par\vspace{1cm}
+        \includegraphics[width=0.15\textwidth]{McGill.pdf}~\par\vspace{1cm}
         {\scshape\LARGE McGill University \par}
         \vspace{1cm}
         {\huge\bfseries Onion Routing: A Quest for Internet Anonymity, and Perhaps also Unparalleled Brilliance\par}
@@ -296,7 +296,7 @@ Our onion router network has the following implemented:
 Although the use of onion routing increases security and anonymity, there is a concern regarding the time needed for a message to be send and received. The reason for this is instead of the message going from the client to destination and back, it must now also pass through several other nodes. Another reason why timing may be a concern is the fact that the encrypting and decrypting process may take some time.\\\\
 To go about determining whether the onion routing system took a long time to send and receive messages, we compared the timing taken by the onion routing system and checked whether it was noticeably longer than the timing of a normal TCP connection.\\\\
 To compute the average time taken by the onion routing system to send and receive a message, the code of the system was edited so that it would print the times corresponding to when the message was sent and received. The sent time was then subtracted from the received time to determine how long it took for the message to reach the destination and return to the client. Ten messages were sent, and the average was taken of these times to determine the average time taken by the onion routing system. The messages were of various sizes to ensure a more complete testing.\\\\
-To compute the average time taken by a normal TCP connection, a simple python script was created to send messages from a client to a destination. This was the script "TCPClient.py" shown in THE TEXTBOOK. However this script was edited so that it also printed the times where the messages were sent and received. Once again ten messages were sent, and the average was computed of these ten times. The ten messages that were sent were the exact same as the 10 messages that were sent on the onion network. This was to ensure that the only variable determining the average time was the type of connection (onion vs. TCP).\\\\
+To compute the average time taken by a normal TCP connection, a simple python script was created to send messages from a client to a destination. Once again ten messages were sent, and the average was computed of these ten times. The ten messages that were sent were the exact same as the 10 messages that were sent on the onion network. This was to ensure that the only variable determining the average time was the type of connection (onion vs. TCP).\\\\
 The following graph and table demonstrate the data collected:
 \begin{center}
     \begin{tabular}{|c|c|c|}
@@ -318,7 +318,9 @@ The following graph and table demonstrate the data collected:
     \hline
     \end{tabular}
 \end{center}
-ADD EXCEL GRAPH\\
+\begin{center}
+    \includegraphics[width=1\textwidth]{timingGraph.pdf}~\par\vspace{1cm}
+\end{center}
 As one can see the difference between the round trip time of the onion system and the normal TCP system is about 3 milliseconds. This is not perceptible to humans so it can be confirmed that timing does not have to be sacrificed for the increased security and anonymity of the onion routing system.
 
 
