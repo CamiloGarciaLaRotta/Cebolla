@@ -15,6 +15,11 @@ D.~M. Goldschlag, M.~G. Reed, and P.~F. Syverson, ``Hiding routing
   information,'' in {\em International Workshop on Information Hiding},
   pp.~137--150, Springer, 1996.
 
+\bibitem{lambdacal}
+J.~Niehren, J.~Schwinghammer, and G.~Smolka, ``A concurrent lambda calculus
+  with futures,'' {\em Theoretical Computer Science}, vol.~364, no.~3,
+  pp.~338--356, 2006.
+
 \bibitem{SymmetricVsAsymmetric}
 M.~Agrawal and P.~Mishra, ``A comparative survey on symmetric key encryption
   techniques,'' {\em International Journal on Computer Science and
