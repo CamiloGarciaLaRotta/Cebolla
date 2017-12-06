@@ -401,22 +401,31 @@ behavioural deficiencies due to increased virtual circuit density. This is a pro
 validation of the onion network's power to preserve anonymity.
 
 \section{Message Size}
-    \begin{enumerate}
-		\item The maximum message size that can be sent in our network is 833 characters, this can
-			be easily changed by simply modifying a small portion of the code.
-		\item The message size also correlates to another feature of encryption. Our goal was to
-			make it more difficult for an outside observer to be able to distinguish who is the
-			destination and who is the originator by keeping the message at a constant size. In
-			order to do see every time a layer of encryption is peeled away, our application will
-			add a layer of padding such that it is difficult to see when it may arrive at the
-			originiator.
-    \end{enumerate}
+It was very important to observe the effects that message size had on the onion network, as size
+limitations will play an important role in measuring the practicality of the system. Furthermore, it
+was important to note if any observation of message size could compromise the security of the
+system.\\\\
+Firstly, messages were sent with increasing length until an odd behaviour was seen. The messages
+were taken from the language $\mathcal{L} = \{(\mathsf{abcdefghijklmnopqrstuvwxyz})^n |
+n\in\mathbb{N}, \text{ onion network doesn't crash}\}$. When the network crashed, $n-1$ was noted and
+the message size was thereby incremented starting from $26(n-1)$ until a precise limit was found. It
+was seen that the maximum message size was 833 characters. Given that the developers hardcoded
+limits of 1024 bytes for message passing and the fact that there is overhead associated with the
+routing protocol, this result makes sense. More importantly, it is noted that messages sized at
+approximately 80\% of the hardcoded limit can be accepted, larger messages can be easily accomodated
+by increasing this hardcoded limit.\\\\
+It was also noted that message sizes generally increased as they travelled across the onion network.
+This is a potentially dangerous result, as with little traffic on the network message paths may be
+deduced. Through further testing, it has been seen that the base 64 encoding of encrypted data
+causes the increase in message length and not the encryption itself. Given more time, the developers
+could have used different encoding schemes (discussed in the Discussion section) to avoid this
+issue, and maintain safer message size properties.
+
 \section{Round Trip Time of Messages}
 Although the use of onion routing increases security and anonymity, there is a concern regarding the
-time needed for a message to be send and received. The reason for this is instead of the message
-going from the client to destination and back, it must now also pass through several other nodes.
-Another reason why timing may be a concern is the fact that the encrypting and decrypting process
-may take some time.\\\\
+time needed for a message to be sent and received. The reason for this is instead of the message
+going from the client to destination and back, it must now also pass through several other nodes,
+and undergo encryption or decryption at each hop.\\\\
 To go about determining whether the onion routing system took a long time to
 send and receive messages, we compared the timing taken by the onion routing system and checked
 whether it was noticeably longer than the timing of a normal TCP connection.\\\\
@@ -460,9 +469,21 @@ The following graph and table demonstrate the data collected:
 		\includegraphics[width=\linewidth,trim={0cm 9cm 4cm 9.7cm},clip=true]{timingGraph.pdf}
 	\end{center}
 \end{figure}
-As one can see the difference between the round trip time of the onion system and the normal TCP
-system is about 3 milliseconds. This is not perceptible to humans so it can be confirmed that timing
-does not have to be sacrificed for the increased security and anonymity of the onion routing system.
+It can be seen that the difference between the round trip time of the onion network and normal TCP
+communication is approximately 3 milliseconds, on average. Although this may seem like a miniscule
+difference, the size of the messages sent in the test were small. Furthermore, it is important to
+consider not just the absolute difference, but the relative difference. It was shown that even for
+relatively small messages, as seen in Figure 3.1, the round trip time in the onion network was
+appromixately $3.8216$ times greater than that of the regular TCP communication. Taking the average
+round trip time in regular TCP communication as a reference, the relative round trip time of the
+onion network communication is approximately $5.8225$ dB, which is substantial. This shows that
+there is, in fact, a considerable price to pay for achieving anonymous communication. Of course, the
+particular price to pay depends on the quality of the servers hosting onion routers, and will
+further depend on other factors including message sizes and network congestion. The practicality of
+this reduction in speed will depend on the use case for the onion network as well. For relatively
+small messages, the network was shown to be relatively fast still, with a round trip time of just under 5
+milliseconds. Therefore, for relatively small message sizes, the performance cost of using the onion
+network will be negligible for most applications.
 
 \part*{Appendices}
 \addcontentsline{toc}{part}{Appendices}
