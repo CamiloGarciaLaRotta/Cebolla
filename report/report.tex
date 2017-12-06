@@ -39,7 +39,7 @@
         \includegraphics[width=0.15\textwidth]{McGill.pdf}~\par\vspace{1cm}
         {\scshape\LARGE McGill University \par}
         \vspace{1cm}
-        {\huge\bfseries Onion Routing: A Quest for Internet Anonymity, and Perhaps also Unparalleled Brilliance\par}
+        {\huge\bfseries Onion Routing:\\A Quest for Internet Anonymity, and Perhaps also for Unparalleled Brilliance\par}
         \vspace{1.5cm}
         {\Large ECSE 414 Final Report\par}
         \vspace{2cm}
@@ -271,14 +271,15 @@ to reveal the message $M$ from $\mathcal{R}$.\\
 
 Though this protocol seems to correctly provide a means for $\mathcal{S}$ and $\mathcal{R}$ to communicate
 annonymously through $\mathcal{O}$, the protocol actually provides no anonymity at all under certain conditions.
-Specifically, if a third party could observe the entire network simultanneously and there were very few users
+Specifically, if a third party could observe the entire network simultaneously and there were very few users
 (for example, only a single sender $\mathcal{S}$), Onion Routing would be of little use.  Under those conditions,
 the third party would observe, for each message $M$ sent by $\mathcal{S}$ along $\mathcal{P}$ intended for
 $\mathcal{R}$, $\mathcal{S}$ send a message to $o_1$, then $o_1$ send to $o_2$, then $o_2$ send to $o_3$, and
 at last $o_3$ send to $\mathcal{R}$.  Clearly, the usefullness of Onion Routing depends on the inability of
 third party observers to determine the last node in $\mathcal{P}$ for any message $M$ from $\mathcal{S}$.
-Therefore, Onion Routing is only an effective means of anonymization when participants are many.  When there are
-large quantities of simultanneous users in an Onion Network, an `omniscient' observer would still be able
+Therefore, Onion Routing is only an effective means of anonymization when participants are numerous.
+When there are
+large quantities of simultaneous users in an Onion Network, an `omniscient' observer would still be able
 to see all traffic flowing through the network but it would be infeasible to correlate the activity of the
 various nodes to the various users/senders $\mathcal{S}$.  Indeed, a user of an Onion Routing Network is similar
 to a participant in a riot: anonymity is directly dependent on the number of accomplices.\\
