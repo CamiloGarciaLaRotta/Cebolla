@@ -5,6 +5,7 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{listings}
 \usepackage{graphicx}
+\usepackage{subcaption}
 \graphicspath{ {images/} }
 \usepackage{hyperref}
 \usepackage[toc,page]{appendix}
@@ -153,7 +154,7 @@ must establish a virtual circuit through $\mathcal{O}$ over which to communicate
 $\mathcal{R}$.  Reed, Syverson, and Goldschlag suggested a separate process for
 establishing the connections between all routers involved in a communication channel
 \cite{OnionRoutingPatent,HidingRoutingInformation}, which was a very practical implementation
-idea that drastically simplified the routing of data messages and elegantly streamlined our
+idea that drastically simplified the routing of data messages and elegantly streamlined the
 circuit establishment process we ended up with which is as follows:
 \begin{enumerate}
     \item Acquire a path $\mathcal{P}$ from thx \textit{directory node} $\mathcal{D}$
@@ -199,15 +200,62 @@ Network does not (and maybe even cannot) attempt to hide the fact that $\mathcal
 communicate through it, which is all that is revealed by observing $\mathcal{S}$'s communication with
 $\mathcal{D}$.  Conversely, the anonymity of the nodes $o_i \in \mathcal{P}$ is crucial to the correctness
 of the Onion Routing implementation; if all $o_i \in \mathcal{P}$ can be known to any observer of
-$\mathcal{S}$ or the network, then any observer can take note \\
+$\mathcal{S}$ or the network, then any observer can watch messages leaving the last node in $\mathcal{P}$
+to determine the identity of $\mathcal{R}$.\\
 
+Therefore, $\mathcal{S}$ must negotiate symmetric keys with each $o_i \in \mathcal{P}$ \textit{indirectly},
+such that observing $\mathcal{S}$ during its circuit establishment cannot reveal every $o_i \in \mathcal{P}$.
+Using the example path $\mathcal{P} = \{o_1, o_2, o_3\}$, $\mathcal{S}$ would first negotiate a key with $o_1$,
+then would do the same with $o_2$ but \textit{through} $o_1$, and finally would negotiate a key with $o_3$, but
+through both $o_1$ and $o_2$.  But how can $\mathcal{S}$ negotiate a key with some node \textit{through} other
+nodes? Using an \textit{onion} data structure. Given the example path $\mathcal{P} = \{o_1, o_2, o_3\}$,
+let's walk through how $\mathcal{S}$ negotiates with all 3 nodes in the path \textit{incrementally} using onions
+so we can have a complete view of the circuit establishment procedure.\\
+
+First, $\mathcal{S}$ will negotiate a key with $o_1$ just as it would with $\mathcal{D}$, since $o_1$ is the
+first node in $\mathcal{P}$.  Then $\mathcal{S}$ must negotiate with $o_2$ through $o_1$. As usual, $\mathcal{S}$
+will start by generating a key $\mathit{sym}_{\mathcal{S},o_2}$ and encrypting said key using $\mathit{pub}_{o_2}$.
+For $o_1$ to relay this encrypted key to $o_2$, $\mathcal{S}$ must send $o_1$ something more -- it must also
+send $o_1$ the identity of $o_2$ so that $o_1$ can know where to relay $\mathcal{S}$'s messages.  Yet
+$\mathcal{S}$ cannot merely prepend the identity of $o_2$ to the encrypted $\mathit{sym}_{\mathcal{S},o_2}$
+because anyone observing $\mathcal{S}$'s messages to $o_1$ would then know that the identity of $o_2$, the node
+after $o_1$ in $\mathcal{P}$.  However, if, after prepending the identity of $o_2$, $\mathcal{S}$ then encrypts with
+$\mathit{sym}_{\mathcal{S},o_1}$, $\mathcal{S}$ can securely have $o_1$ pass along the encrypted key intended
+for $o_2$.  $o_1$ need only decrypt with $\mathit{sym}_{\mathcal{S},o_1}$ to see the identity of $o_2$ prepended
+to some encrypted content and forward that content to $o_2$.  This data structure that $\mathcal{S}$ sends to
+$o_1$ is an \textit{onion} (and a single-layer onion, at that).  The onion is what allows $o_1$ to securely
+relay content to $o_2$.  Each layer of the onion is defined by prepending the identity of $o_{i+1}$ and encrypting
+with $\mathit{sym}_{\mathcal{S}, o_i}$.\\
+
+At this point is should be obvious how $\mathcal{S}$ will get the encrypted key $\mathit{sym}_{\mathcal{S},o_3}$
+into the hands of $o_3$.  $\mathcal{S}$ will prepend $o_3$ and encrypt with
+$\mathit{sym}_{\mathcal{S},o_2}$, and then prepend $o_2$ and encrypt with $\mathit{sym}_{\mathcal{S},o_1}$.
+Shown below is a graphical representation of the three messages sent by $\mathcal{S}$ to $o_1$ to establish
+the virtual circuit through $\mathcal{P} = \{o_1, o_2, o_3\}$.
+
+\begin{figure}[h]
+    \begin{subfigure}{0.2\textwidth}
+        \includegraphics[width=0.9\linewidth]{keyestab_01}
+        \caption*{Negotiate symmetric key with $o_1$ directly}
+    \end{subfigure}
+    \begin{subfigure}{0.35\textwidth}
+        \includegraphics[width=0.9\linewidth]{keyestab_02}
+        \caption*{Negotiate symmetric key with $o_2$ through $o_1$ using single-layer onion}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=0.9\linewidth]{keyestab_03}
+        \caption*{Negotiate symmetric key with $o_3$ through $o_1$ and $o_2$ using double-layer onion}
+    \end{subfigure}
+\end{figure}
+
+\hfill \newline
 In a favorable scenario, $|\mathcal{O}|$ is very large, and the amount of communication channels
 throughout the onion network is also very large. This provides even more security, as it makes
 things extremely difficult for observers to deduce the path of a message in the network. As the
 traffic in the network gets greater, it becomes practically infeasible for an observer to try to do
 this.\\
 
-\section{Architecture and Implementation}
+\section{Software Architecture and Implementation}
 We leveraged Python’s socket and Threading library to avoid having to implement the lower level requirements of this project.
 The nodes that comprise the Onion network are: the Directory, the Router, the Client and the Destination.
 The directory and the router nodes sit in the inside of the network, only listening on predefined ports.
