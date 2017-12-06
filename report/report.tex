@@ -157,7 +157,7 @@ establishing the connections between all routers involved in a communication cha
 idea that drastically simplified the routing of data messages and elegantly streamlined the
 circuit establishment process we ended up with which is as follows:
 \begin{enumerate}
-    \item Acquire a path $\mathcal{P}$ from thx \textit{directory node} $\mathcal{D}$
+    \item Acquire a path $\mathcal{P}$ from the \textit{directory node} $\mathcal{D}$
     \item Negotiate symmetric encryption keys with each node $o_i \in \mathcal{P}$
 \end{enumerate}
 Once $\mathcal{S}$ has established $\mathcal{P}$ in $\mathcal{O}$, it can then wrap a message $M$
@@ -218,7 +218,7 @@ will start by generating a key $\mathit{sym}_{\mathcal{S},o_2}$ and encrypting s
 For $o_1$ to relay this encrypted key to $o_2$, $\mathcal{S}$ must send $o_1$ something more -- it must also
 send $o_1$ the identity of $o_2$ so that $o_1$ can know where to relay $\mathcal{S}$'s messages.  Yet
 $\mathcal{S}$ cannot merely prepend the identity of $o_2$ to the encrypted $\mathit{sym}_{\mathcal{S},o_2}$
-because anyone observing $\mathcal{S}$'s messages to $o_1$ would then know that the identity of $o_2$, the node
+because anyone observing $\mathcal{S}$'s messages to $o_1$ would then know the identity of $o_2$, the node
 after $o_1$ in $\mathcal{P}$.  However, if, after prepending the identity of $o_2$, $\mathcal{S}$ then encrypts with
 $\mathit{sym}_{\mathcal{S},o_1}$, $\mathcal{S}$ can securely have $o_1$ pass along the encrypted key intended
 for $o_2$.  $o_1$ need only decrypt with $\mathit{sym}_{\mathcal{S},o_1}$ to see the identity of $o_2$ prepended
@@ -248,14 +248,52 @@ the virtual circuit through $\mathcal{P} = \{o_1, o_2, o_3\}$.
     \end{subfigure}
 \end{figure}
 
-\hfill \newline
-In a favorable scenario, $|\mathcal{O}|$ is very large, and the amount of communication channels
-throughout the onion network is also very large. This provides even more security, as it makes
-things extremely difficult for observers to deduce the path of a message in the network. As the
-traffic in the network gets greater, it becomes practically infeasible for an observer to try to do
-this.\\
+Once the virtual circuit over $\mathcal{P}$ is established, $\mathcal{S}$ can send messages $M$ to
+$\mathcal{R}$ freely by encapsulating each message in an onion.  An example onion is shown below, using, once
+again, path $\mathcal{P} = \{o_1, o_2, o_3\}$.
 
-\section{Software Architecture and Implementation}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\linewidth]{onion.png}
+    \caption*{Example of an onion sent from $\mathcal{S}$ through $\mathcal{P}$ to $\mathcal{R}$.  In other
+    words, $\mathcal{S}$ simply sends this onion to node $o_1$.}
+\end{figure}
+
+Having finished discussing the mechanics of virtual circuit establishment and messaging from $\mathcal{S}$
+to $\mathcal{R}$ using onions, the only unexplored portion of the Onion Routing Communication Protocol concerns
+the mechanics of relaying messages from $\mathcal{R}$ \textit{back} to $\mathcal{S}$.  Thankfully,
+`backwards-relaying' is exceedingly simple.  Continuing with the example path $\mathcal{P} = \{o_1, o_2, o_3\}$,
+when $o_3$ receives a message $M$ from $\mathcal{R}$, $o_3$ encrypts with $\mathit{sym}_{\mathcal{S},o_3}$ and
+relays to $o_2$ which then encrypts with $\mathit{sym}_{\mathcal{S},o_2}$ and relays to $o_1$ which then
+encrypts with $\mathit{sym}_{\mathcal{S},o_1}$ and relays to $\mathcal{S}$.  Finally, $\mathcal{S}$ decrypts
+with $\mathit{sym}_{\mathcal{S},o_1}$ then $\mathit{sym}_{\mathcal{S},o_2}$ then $\mathit{sym}_{\mathcal{S},o_3}$
+to reveal the message $M$ from $\mathcal{R}$.\\
+
+Though this protocol seems to correctly provide a means for $\mathcal{S}$ and $\mathcal{R}$ to communicate
+annonymously through $\mathcal{O}$, the protocol actually provides no anonymity at all under certain conditions.
+Specifically, if a third party could observe the entire network simultanneously and there were very few users
+(for example, only a single sender $\mathcal{S}$), Onion Routing would be of little use.  Under those conditions,
+the third party would observe, for each message $M$ sent by $\mathcal{S}$ along $\mathcal{P}$ intended for
+$\mathcal{R}$, $\mathcal{S}$ send a message to $o_1$, then $o_1$ send to $o_2$, then $o_2$ send to $o_3$, and
+at last $o_3$ send to $\mathcal{R}$.  Clearly, the usefullness of Onion Routing depends on the inability of
+third party observers to determine the last node in $\mathcal{P}$ for any message $M$ from $\mathcal{S}$.
+Therefore, Onion Routing is only an effective means of anonymization when participants are many.  When there are
+large quantities of simultanneous users in an Onion Network, an `omniscient' observer would still be able
+to see all traffic flowing through the network but it would be infeasible to correlate the activity of the
+various nodes to the various users/senders $\mathcal{S}$.  Indeed, a user of an Onion Routing Network is similar
+to a participant in a riot: anonymity is directly dependent on the number of accomplices.\\
+
+Yet another condition which defeats the purpose of an Onion Routing network is when the network itself consists
+of too few routers.  In this case, the observer need observe so few nodes that the set of possible recipients
+$\mathcal{R}$, which is always equal to the set of endpoints of outgoing connections from the network, is too
+small to provide practical anonymity.\\
+
+Even when all the appropriate conditions are met, it is unclear whether a truly capable attacker can use
+statistical techniques to correlate outgoing nodes to a particular sender.  Nonetheless, having investigated
+our implementation of an Onion Routing Protocol in fair detail, Onion Routing stands as a viable technique for
+providing anonymity to communications on the open internet.
+
+\section{Software Architecture and Implementation: TODO Camillo?}
 We leveraged Python’s socket and Threading library to avoid having to implement the lower level requirements of this project.
 The nodes that comprise the Onion network are: the Directory, the Router, the Client and the Destination.
 The directory and the router nodes sit in the inside of the network, only listening on predefined ports.
@@ -268,10 +306,6 @@ The client acts as the command line interface for the client using the network. 
 All the nodes on the network use a custom-made library for encryption, wich we named Stealth and provides convenient object for symmetric and asymmetric encryption.
 This implementation of the onion router is built upon TCP communication and relies on a globally defined socket for all internal nodes.\\
 
-
-\chapter{Results}
-\section{Nodes}
-MAYBE THIS SECTION SHOULD BE IN METHODOLOGY???\\
 Our onion router network has the following implemented:
 \begin{enumerate}
     \item Directory node: Responsible for the specifying a path/ series of router nodes to pass through when a message is sent and to also send the respective keys for the routers
@@ -284,6 +318,8 @@ Our onion router network has the following implemented:
     \end{enumerate}
     \item Destination node: This is the node that will receive the complete message also send back a confirmation message in the backward channel. This message will have a layer of encryption added on at every onion router node until it has reached the client node to be decrypted
 \end{enumerate}
+
+\chapter{Results}
 \section{Multiple Users}
     Once the onion network has been set up, it is capable of handling more than just one user/client. To show this feature, the first client must set up the whole network. Afterwards, anyone else simply has to set up a client node and they will be one the same network that the first client set up. All clients on this node will be able to send messages without any interruptions or errors occurring.
 
