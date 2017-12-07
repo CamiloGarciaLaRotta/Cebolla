@@ -485,6 +485,83 @@ small messages, the network was shown to be relatively fast still, with a round 
 milliseconds. Therefore, for relatively small message sizes, the performance cost of using the onion
 network will be negligible for most applications.
 
+\chapter{Discussion}
+Since the beginning of the project, it was decided to split the duties across two teams: one team
+for developing the software, and another team for validating the software. The goal of the
+validation team was to perform a rigorous series of creative black box tests to effectively try to
+break the system. Under this methodology, the two teams observe the software from two different
+perspectives, which allowed for finding issues with the software in an efficient manner.\\\\
+Though, even under this development paradigm, problems still arose like weeds in a garden. The first
+major design issue revolved around keeping ciphertext sizes constant throughout the network to avoid
+the possibility of a length attack, an attack allowing an eavesdropper to find the path of onion
+routers that a client is communicating through. Originally, the design for the onion routing
+involved sending header data (such as next node address, next node port, message type) under each
+layer of encryption. When the onion routers would peel off a layer, they would not propagate the
+header data forward (if they did, the last router could determine the message path), so the messages
+decreased in size over the network. Given the early implementation of the onion routing
+system, implementing fixed-size messages was an enormous challenge, because intermediate nodes could
+not add padding to
+data in such a way that both the padding is encrypted and the next node can decrypt the message,
+because each onion router only knows its own symmetric key. The first idea to solve this issue
+involved adding a large, random amount of padding to the plaintext at the originator. This way,
+tracing messages sizes becomes much less predictable, and thus performing a length attack becomes
+much more difficult. However, this solution required an enormous amount of overhead, and was more of
+a ``hack" than a decent solution. The next idea to solve this issue was to give each router access to
+the previous node in the path's symmetric key. This way, when before propagating a message forward,
+the router may add padding (so as to fix the message size) and encrypt the new message with its own
+symmetric key. Then, when the next node receives a message, it can decrypt this layer of encryption
+and remove the padding. However, this solution was quite complex, as it also involved providing each
+onion router (and the client) with extra random number generators to keep the symmetric encryption
+objects in sync. Furthermore, the job of each onion router became far more complex, which negatively
+impacted performance. Finally, allowing each router to see the previous node's symmetric key is
+sloppy in design and could lead to further security issues. Fortunately, the solution to this issue
+came forth after a realization about the virtual circuit establishment process that was described
+earlier. Since the virtual circuit establishment process opens all requisite TCP connections for the
+virtual circuit to function, the header data mentioned previously was no longer needed in order to
+route the message effectively! Therefore, the onion-creation algorithm and onion router protocols
+were simplified, and problem of decreasing message sizes was no longer an issue.\\
+Unfortunately, constant-size messages still has not been implemented perfectly. Due to the base 64
+encoding of encrypted data being sent over the network, message sizes now may increase slightly as
+they are propagated forward. Given more time, the development could have researched other encoding
+schemes (or perhaps avoided encoding altogether) to resolve this issue. Nonetheless, the current
+implementation has the best message size handling of the solutions suggested above, and is
+implemented by simpler and easily-readable code, which is a vast improvement.\\\\
+For the testing team, the big question was ``to automate or not to automate". The testing team oversaw
+making sure that the software worked, meaning that the encryption was working and that the messages
+were being delivered and received from host to destination and vice-versa. Initially, all the
+testing was done manually. The testers would manually set up every forwarding node, the destination
+node, the client node and the directory node. This would become time-consuming since there would
+often be 10 or more nodes working at a time to test the system at scale. A discussion took place and
+the decision to automate the deployment of the network was made. Two scripts were made to work in
+tandem. The first one, called \texttt{networkInitializer}, was a bash script that would \texttt{ssh}
+the user into many machines. The second bash script, called \texttt{executeNetwork}, would start up a given
+number of forwarding nodes along with a client node, directory node and destination node.
+Furthermore, another bash script called \texttt{testCases} was written to send messages sequentially instead
+of manually typing them in. This eliminated the redundancy of running regression tests and removed
+the boilerplater setup commands, effectively saving a lot of time.\\\\
+A lot of work was completed for this project, but more features could have been implemented given
+more time. The current network implementation has a big flaw concerning fault tolerance. If any of
+the onion routers were to go down or fail to communicate, then all of the
+threads involved would raise uncaught exceptions, causing the involved onion routers to crash. If
+time permitted, fault tolerance would have been implemented and the nodes would be able to shut down
+in a graceful manner.  This would mean that the routers would not raise uncaught exceptions and
+would propagate news of the circuit's failure to all participating nodes before leaving the circuit
+themselves. Also, the failure of any router in a virtual circuit would cause the circuit in question
+to shut down, and the originator clients involved  would be signaled to establish new virtual
+circuits. \\\\
+Another enhancement that could have been beneficial would be to have log files be generated whenever
+an error would happen in the network to simplify the debugging process. Furthermore, it would have
+been better to write the timing results to a file during the reception of the message instead of
+printing it to standard output. \\\\
+All things considered, the tools such as git and the weekly meetings helped to keep the team on
+track throughout the entire process and ensured that every member of the team communicated when an
+issue or bug was found. The in-team communication allowed for bugs and design decisions to be dealt
+with swiftly and efficiently. Overall, although the onion routing implementation has its flaws,
+quasi-practical encrypted and ``chaotic" communication was observed. Therefore, the onion network
+was shown to hide communication endpoint data from simple enemies. As mentioned above, there
+remains some changes to be made to fully secure the system, but the given implementation outperforms
+a VPN service with regard to anonymity over the Internet.
+
 \part*{Appendices}
 \addcontentsline{toc}{part}{Appendices}
 \begin{appendix}
