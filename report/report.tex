@@ -296,45 +296,78 @@ statistical techniques to correlate outgoing nodes to a particular sender.  None
 our implementation of an Onion Routing Protocol in fair detail, Onion Routing stands as a viable technique for
 providing anonymity to communications on the open internet.
 
-\section{Software Architecture and Implementation: TODO Camillo?}
-We leveraged Python’s socket and Threading library to avoid having to implement the lower level
-requirements of this project.  The nodes that comprise the Onion network are: the Directory, the
-Router, the Client and the Destination.  The directory and the router nodes sit in the inside of the
-network, only listening on predefined ports.  Whereas the client and the destination sit on the edge
-of the network, being able to communicate on other ports.  All the nodes in the network are
-multithreaded to support multiple parallel communication between different clients, destination
-pairs.  The Directory node keeps track of participant router nodes and generates a random path of 3
-nodes whenever a client node wishes to communicate through the network.  The router node has 2
-primordial function: to pass along the path a setup onion and to handle the bidirectional transfer
-of onions to the next and prior node in the path.  The destination, nicknamed dummy destination, has
-the sole purpose of responding to any incoming message on an arbitrarily selected port.  The client
-acts as the command line interface for the client using the network. Given a destination it will
-request a path from the Directory, setup the virtual circuit and build the onion to send to the
-destination.  All the nodes on the network use a custom-made library for encryption, wich we named
-Stealth and provides convenient object for symmetric and asymmetric encryption.  This implementation
-of the onion router is built upon TCP communication and relies on a globally defined socket for all
-internal nodes.\\
 
-Our onion router network has the following implemented:
+\section{Software Architecture and Implementation}
+The design process of the architecture of the Onion Network was the main focus of the first weekly
+meetings of the group. Leveraging the Object Oriented paradigm allowed us to naturally represent
+the multiple components that make up the network by abstracting their functionalities behind clean
+and simple interfaces. Due to the short sprints and heavy workload of the semester, a
+programming language that would allow us to build a product prototype quickly was opted for. Python and the
+Threading and Socket library were the chosen solutions for the job, as they provided enough power to
+implement the onion routing system while providing a comfortable amount of abstractions and
+resources.\\
+
+\noindent The network is comprised of a Directory, a Router, a Client and a Destination node. As
+seen in the following graph, the Directory and the Router nodes sit in the inside of the
+network, only listening on predefined ports. In the example below, port 4001 is used for the
+communication between the Routers and the Directory, while port 5001 is used for the transfer of
+messages between Nodes.  The Client and the Destination sit on the edge
+of the network, being able to communicate on other ports and with other machines. There were
+multiple design choices made by the group. Most notably, all the nodes in the network are
+multithreaded to support multiple parallel communication between different clients, destination
+pairs. All the nodes on the network use a custom-made library for encryption, called
+\texttt{stealth}, and provides convenient object for symmetric and asymmetric encryption. We rely on
+TCP communication to ensure reliable data transfer and congestion control. \\
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{Deployment}    
+\end{center}
+
+The network implements the following components:
 \begin{enumerate}
-	\item Directory node: Responsible for the specifying a path/ series of router nodes to pass
+	\item Directory node: 
+	\begin{enumerate}
+		\item Responsible for specifying a path $\mathcal{P}$ (series of router nodes) to pass
 		through when a message is sent and to also send the respective keys for the routers
-	\item Onion router node: Responsible for peeling and encrypting messages depending if the
-		message is in the forward or backward channel. Depending on how the routers are placed in a
-		path, when a message is sent from one router to another, the receiver will send an
-		acknowledgment message to confirm it has received the correct message.
+	\end{enumerate}
+	\item Onion router node: 
+	\begin{enumerate}   
+		\item Responsible for peeling layers of encryption and encrypting messages depending if the
+			message is in the forward or backward channel (request message or response,
+			respectively).
+		\item Depending on how the routers are placed in a path, when a message is sent from one router to another, the receiver will send an acknowledgment message to confirm it has received the correct message.
+	\end{enumerate}
     \item Client node:
     \begin{enumerate}
+	    \item Acts as the command line interface for the client using the network.
         \item This is the node that will send the layered encrypted message in the forward channel
 		\item The client node will also send a message to all the nodes given by the directory node
 			to set up a channel for it to send a message to the destination node
 		\item When it receives the encrypted confirmation message from the destination node, it will
 			then decrypt the message to allow to user to see
     \end{enumerate}
-	\item Destination node: This is the node that will receive the complete message also send back a
-		confirmation message in the backward channel. This message will have a layer of encryption
-		added on at every onion router node until it has reached the client node to be decrypted
+	\item Destination node: 
+	\begin{enumerate}
+	    \item Although the destination is an independent entity from the onion network, a custom
+			server was built for the purposes of convenient testing. This server simply listened on
+			a port and returned the capitalized version of any messages it received. Theoretically,
+			any application listening on an open port accessible over the Internet could be used,
+			but they may require more complicated request formats, which would complicate testing.
+	\end{enumerate}
 \end{enumerate}
+
+All functionalities of the onion network are contained in these four components. This architecture
+is heavily influenced by the client-server model, as there is a clear division of work and services
+between the requesters of the service (potential clients) and the providers of the service (the
+directory node, and on a deeper level, the onion routers). This allowed for a modular design, as the
+different tasks are independent of each other, allowing large changes to be made without destroying
+the rest of the system.\\\\
+Furthermore, the proposed onion routing implementation sports a quasi-layered architecture. The
+cryptographic duties, for example, were designed entirely separately from the networking tasks. This
+allowed for more modularity and concurrent development between those two major elements of the
+project. The interface between the custom cryptography library and the multiple networking processes
+is very simple, and both could be modified drastically without any recourse without affecting the
+other.
 
 \chapter{Results}
 Once the onion routing implementation was in working order, the next order of business was to ensure
@@ -390,7 +423,7 @@ Where $\times^{\aleph}$ may be interpreted as a cartesian product of multiplicit
 Schwinghammer, and Smolka allude to a $\mathsf{newChannel}$ abstraction, which is remarkably similar
 to the virtual circuits that were already designed. Given these abstractions, it has been shown that
 proper implementation can lead to provable thread-safety \cite{lambdacal}.\\\\
-Niehren, Schwinghammer, and Smolka recommend implementing abstractions for their researched
+Niehren, Schwinghammer, and Smolka recommend implementing these abstractions for their researched
 $\lambda(\mathsf{fut})$ -- a concurrent lambda calculus with futures. Given its promise and security
 implications, it was a good fit for the implementation of multithreaded onion routers. Using a
 conceptual lambda calulus as a foundation may seem eccentric -- though in truth, all people that
