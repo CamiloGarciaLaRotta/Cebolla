@@ -51,7 +51,7 @@ Simulating the Onion Network
 3. Log in to `cs-1.cs.mcgill.ca` and have Cebolla installed. Navigate to the Cebolla directory.
 4. Launch the directory node with the following command: `python
    directory/onion_directory.py MAX_NODES LISTEN_PORT KEY_PORT [-v]`, where
-   MAX_NODES is the largest value of `x` such that `lab2-x.cs.mcgill.ca` has an
+   `MAX_NODES` is the largest value of `x` such that `lab2-x.cs.mcgill.ca` has an
    onion router running, and `LISTEN_PORT` and `KEY_PORT` serve the same
    purpose as in the onion router command. Upon running this command, the
    listening onion routers that were found should be displayed.
@@ -68,9 +68,9 @@ NOTE: this step is not necessary. Theoretically, any destination can be used,
 ### Step 4 - Launch a Client
 7. Log in to a McGill machine with Cebolla installed. Navigate to the Cebolla directory.
 8. Run the following command: `python client/onion_client.py DESTINATION
-   LISTEN_PORT [-d DESTINATION_PORT] [-v]`, where DESTINATION is the domain
-   name of the destination, LISTEN_PORT is the port that onion routers are
-   listening on, and DESTINATION_PORT specifies the port that the destination
+   LISTEN_PORT [-d DESTINATION_PORT] [-v]`, where `DESTINATION` is the domain
+   name of the destination, `LISTEN_PORT` is the port that onion routers are
+   listening on, and `DESTINATION_PORT` specifies the port that the destination
    is listening on. This value defaults to 80 when not specified.
 9. Now, a prompt should appear, and messages may be entered. Type a message and
    press RETURN to send the message. A response should follow shortly after,
