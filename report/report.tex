@@ -7,12 +7,12 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \graphicspath{ {images/} }
+\usepackage{setspace}
 \usepackage{hyperref}
 \usepackage[toc,page]{appendix}
 \usepackage{color}
 \usepackage{courier}
 \usepackage{tikz}
-\usepackage{setspace}
 \usepackage{titlesec}
 \usepackage{complexity}
 \usepackage{makecell}
@@ -59,14 +59,15 @@
 
 \tableofcontents
 
-\doublespacing
-
+%\doublespacing
+\spacing{1.5}
 
 \chapter{Introduction and Background}
 Suppose it is desired to communicate sensitive information across the Internet to a trusted source.
 Of course, it should not be possible for an arbitrary observer to read this information. The problem
 of hiding information can be solved by encrypting data, taking advantage of the advances in the
-field of cryptography, so that only the trusted source may be able to unscramble (and thus
+field of cryptography\footnote{see \hyperref[crypto]{Appendix A} for more information about
+cryptography}, so that only the trusted source may be able to unscramble (and thus
 effectively read) the message that was sent. But what if this communication was so sensitive that it
 is even desired that no arbitrary observer should even know that the source and trusted destination
 are communicating with each other? This presents another interesting problem that goes beyond
@@ -128,12 +129,14 @@ with respect to security:
         trace the path of a message
 \end{enumerate}
 Therefore, Onion Routing is a very promising technique for providing complete anonymity of a
-communication channel. However, it is also a drastically more complex protocol then communicating
+communication channel. However, it is also a drastically more complex protocol than communicating
 through a VPN, for example. The added complexity may cause many considerable design challenges,
 performance reductions, and practical limitations, which may ultimately affect its feasibility.\\
 
 The remainder of this report will describe the implementation details of such a protocol, and will
-discuss the design challenges that were faced. Furthermore, a thorough \textit{expos\'e} of the
+discuss the design challenges that were faced. \hyperref[crypto]{Appendix A} covers the requisite
+details about cryptography that are necessary to understand the design decisions made in the
+proposed implementation of Onion Routing. Furthermore, a thorough \textit{expos\'e} of the
 limitations of the protocol, as well as the costs of mitigating these limitations, will be given.
 Moreover, performance details such as the added delay imposed by multiple intermediate routers and
 encryption or decryption will be observed. Although the Onion Routing protocol is promising, it
@@ -304,7 +307,7 @@ the multiple components that make up the network by abstracting their functional
 and simple interfaces. Due to the short sprints and heavy workload of the semester, a
 programming language that would allow us to build a product prototype quickly was opted for. Python and the
 Threading and Socket library were the chosen solutions for the job, as they provided enough power to
-implement the onion routing system while providing a comfortable amount of abstractions and
+implement the Onion Routing system while providing a comfortable amount of abstractions and
 resources.\\
 
 \noindent The network is comprised of a Directory, a Router, a Client and a Destination node. As
@@ -362,7 +365,7 @@ between the requesters of the service (potential clients) and the providers of t
 directory node, and on a deeper level, the onion routers). This allowed for a modular design, as the
 different tasks are independent of each other, allowing large changes to be made without destroying
 the rest of the system.\\\\
-Furthermore, the proposed onion routing implementation sports a quasi-layered architecture. The
+Furthermore, the proposed Onion Routing implementation sports a quasi-layered architecture. The
 cryptographic duties, for example, were designed entirely separately from the networking tasks. This
 allowed for more modularity and concurrent development between those two major elements of the
 project. The interface between the custom cryptography library and the multiple networking processes
@@ -370,7 +373,7 @@ is very simple, and both could be modified drastically without any recourse with
 other.
 
 \chapter{Results}
-Once the onion routing implementation was in working order, the next order of business was to ensure
+Once the Onion Routing implementation was in working order, the next order of business was to ensure
 that it was functioning properly under various stresses, to determine the limitations of the system,
 and to ultimately analyze its practicality. Various stresses were taken into account, such as the
 performance effect of having several virtual circuits set up simultaneously and the behaviour of the
@@ -379,7 +382,7 @@ were made to compare the setup time and round trip time of the proposed onion ne
 simple, garden variety message paths. The remainder of this chapter discusses the results that were
 found.
 \section{Behaviour with Several Simultaneous Virtual Circuits}
-It was shown previously that onion routing is only effective when there is lots of traffic within
+It was shown previously that Onion Routing is only effective when there is lots of traffic within
 the onion network -- this makes it infeasible for an eavesdropper to discern a particular user's
 message path $\mathcal{P}$. Therefore, it was imperative to ensure that the network performed
 appropriately when there are multiple simultaneous virtual circuits set up, which simulates multiple
@@ -429,7 +432,7 @@ implications, it was a good fit for the implementation of multithreaded onion ro
 conceptual lambda calulus as a foundation may seem eccentric -- though in truth, all people that
 continuously \textit{hanker} about a golden yesteryear implement bleeding-edge lambda calculi.\\\\
 Based on what has been proven true about $\lambda(\mathsf{fut})$, and reinforced by the test
-results, it can be concluded that the onion routing system presented in this text is invulnerable to
+results, it can be concluded that the Onion Routing system presented in this text is invulnerable to
 behavioural deficiencies due to increased virtual circuit density. This is a promising result in the
 validation of the onion network's power to preserve anonymity.
 
@@ -451,26 +454,26 @@ It was also noted that message sizes generally increased as they travelled acros
 This is a potentially dangerous result, as with little traffic on the network message paths may be
 deduced. Through further testing, it has been seen that the base 64 encoding of encrypted data
 causes the increase in message length and not the encryption itself. Given more time, the developers
-could have used different encoding schemes (discussed in the Discussion section) to avoid this
-issue, and maintain safer message size properties.
+could have used different encoding schemes (discussed in the \hyperref[discussion]{Discussion
+section}) to avoid this issue, and maintain safer message size properties.
 
 \section{Round Trip Time of Messages}
-Although the use of onion routing increases security and anonymity, there is a concern regarding the
+Although the use of Onion Routing increases security and anonymity, there is a concern regarding the
 time needed for a message to be sent and received. The reason for this is instead of the message
 going from the client to destination and back, it must now also pass through several other nodes,
 and undergo encryption or decryption at each hop.\\\\
-To go about determining whether the onion routing system took a long time to
-send and receive messages, we compared the timing taken by the onion routing system and checked
+To go about determining whether the Onion Routing system took a long time to
+send and receive messages, we compared the timing taken by the Onion Routing system and checked
 whether it was noticeably longer than the timing of a normal TCP connection.\\\\
 To compute the
-average time taken by the onion routing system to send and receive a message, the code of the system
+average time taken by the Onion Routing system to send and receive a message, the code of the system
 was edited so that it would print the times corresponding to when the message was sent and received.
 The sent time was then subtracted from the received time to determine how long it took for the
 message to reach the destination and return to the client. Ten messages were sent, and the average
-was taken of these times to determine the average time taken by the onion routing system. The
+was taken of these times to determine the average time taken by the Onion Routing system. The
 messages were of various sizes to ensure a more complete testing.\\\\
 To compute the average time
-taken by a normal TCP connection, a simple python script was created to send messages from a client
+taken by a normal TCP connection, a simple Python script was created to send messages from a client
 to a destination. Once again ten messages were sent, and the average was computed of these ten
 times. The ten messages that were sent were the exact same as the 10 messages that were sent on the
 onion network. This was to ensure that the only variable determining the average time was the type
@@ -519,6 +522,7 @@ milliseconds. Therefore, for relatively small message sizes, the performance cos
 network will be negligible for most applications.
 
 \chapter{Discussion}
+\label{discussion}
 Since the beginning of the project, it was decided to split the duties across two teams: one team
 for developing the software, and another team for validating the software. The goal of the
 validation team was to perform a rigorous series of creative black box tests to effectively try to
@@ -527,11 +531,11 @@ perspectives, which allowed for finding issues with the software in an efficient
 Though, even under this development paradigm, problems still arose like weeds in a garden. The first
 major design issue revolved around keeping ciphertext sizes constant throughout the network to avoid
 the possibility of a length attack, an attack allowing an eavesdropper to find the path of onion
-routers that a client is communicating through. Originally, the design for the onion routing
+routers that a client is communicating through. Originally, the design for the Onion Routing
 involved sending header data (such as next node address, next node port, message type) under each
 layer of encryption. When the onion routers would peel off a layer, they would not propagate the
 header data forward (if they did, the last router could determine the message path), so the messages
-decreased in size over the network. Given the early implementation of the onion routing
+decreased in size over the network. Given the early implementation of the Onion Routing
 system, implementing fixed-size messages was an enormous challenge, because intermediate nodes could
 not add padding to
 data in such a way that both the padding is encrypted and the next node can decrypt the message,
@@ -589,7 +593,7 @@ printing it to standard output. \\\\
 All things considered, the tools such as git and the weekly meetings helped to keep the team on
 track throughout the entire process and ensured that every member of the team communicated when an
 issue or bug was found. The in-team communication allowed for bugs and design decisions to be dealt
-with swiftly and efficiently. Overall, although the onion routing implementation has its flaws,
+with swiftly and efficiently. Overall, although the Onion Routing implementation has its flaws,
 quasi-practical encrypted and ``chaotic" communication was observed. Therefore, the onion network
 was shown to hide communication endpoint data from simple enemies. As mentioned above, there
 remains some changes to be made to fully secure the system, but the given implementation outperforms
@@ -599,6 +603,7 @@ a VPN service with regard to anonymity over the Internet.
 \addcontentsline{toc}{part}{Appendices}
 \begin{appendix}
     \chapter{A Brief Conspectus of Cryptography}
+	\label{crypto}
     The Onion Routing protocol described in this report makes extensive use of cryptography for
     encrypting and decrypting sensitive data. Encryption is the process of obscuring data in such a
     way that only the intended recipient of the data may read the data, via decryption. In order for
@@ -679,7 +684,7 @@ a VPN service with regard to anonymity over the Internet.
     asymmetric cryptography allows the sender to share symmetric keys without anyone aside from the
     desired router being able to see the symmetric key.\\\\
     Although asymmetric cryptography does provide some incredible benefits, it also has its
-    drawbacks. Firstly, asymmetric encryption and decryption is relatively slow
+    drawbacks. Firstly, asymmetric encryption and decryption are relatively slow
     \cite{SymmetricVsAsymmetric}, so it is beneficial to reduce the frequency of its use as much as
     possible without comprimising the security of the system. Furthermore, in some applications,
     such as the main purpose of onion routers, for example, it may be necessary to send encrypted
@@ -700,7 +705,7 @@ a VPN service with regard to anonymity over the Internet.
     \begin{tabular}{|c|c|c|}
         \hline
         \textbf{Resource} & \textbf{Origin} & \textbf{Reason for Use}\\\hline
-        PyCrypto python library & \url{https://www.dlitz.net/software/pycrypto/} & \makecell{AES
+        PyCrypto Python library & \url{https://www.dlitz.net/software/pycrypto/} & \makecell{AES
         encryption/decryption,\\RSA encryption/decryption,\\importing and exporting of RSA keys,\\random
         byte string generation,\\pseudorandom number generators}\\\hline
     \end{tabular}
